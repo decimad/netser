@@ -11,8 +11,8 @@ This lib has two motivations:
 
 	// Zipped Layout <-> Mapping definition
 	using zipped = netser::zipped< 
-		net_uint<15>, MEMBER1(my_struct, int_member1) >,
-		net_uint<17>, MEMBER2(my_struct, int_member2) >
+		net_uint<15>, MEMBER1(my_struct, int_member1),
+		net_uint<17>, MEMBER2(my_struct, int_member2)
 	>;
 	
 	// Allow netser to find the default zipped definition for my_struct

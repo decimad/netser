@@ -3,7 +3,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#pragma once
+#ifndef NETSER_LAYOUT_MAPPING_HPP__
+#define NETSER_LAYOUT_MAPPING_HPP__
+
 #include <type_traits>
 #include <netser/utility.hpp>
 
@@ -440,3 +442,5 @@ namespace netser {
     ::netser::mapped_member< Class, decltype(::netser::detail::deduce_type(&Class::Member)), &Class::Member, Mapping >
 #define NESTED_DEFAULT( Class, Member ) \
     ::netser::mapped_member< Class, decltype(::netser::detail::deduce_type(&Class::Member)), &Class::Member, decltype(default_mapping(std::declval<decltype(::netser::detail::deduce_type(&Class::Member))>())) >
+
+#endif

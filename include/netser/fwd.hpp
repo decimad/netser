@@ -3,7 +3,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#pragma once
+#ifndef NETSER_FWD_HPP___
+#define NETSER_FWD_HPP___
+
 #include <cstddef>
 using std::size_t;
 
@@ -22,3 +24,5 @@ namespace netser {
     using big_endian    = be;
 
 }
+
+#endif

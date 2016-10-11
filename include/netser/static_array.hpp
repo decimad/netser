@@ -3,7 +3,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#pragma once
+#ifndef NETSER_STATIC_ARRAY_HPP__
+#define NETSER_STATIC_ARRAY_HPP__
+
 #include <netser/layout.hpp>
 
 namespace netser {
@@ -114,3 +116,5 @@ namespace netser {
     };
 
 }
+
+#endif

@@ -3,7 +3,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#pragma once
+#ifndef NETSER_UTILITY_HPP__
+#define NETSER_UTILITY_HPP__
+
 #include <netser/type_list.hpp>
 
 namespace netser {
@@ -164,3 +166,5 @@ namespace netser {
     }
 
 }
+
+#endif

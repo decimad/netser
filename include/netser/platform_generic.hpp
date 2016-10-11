@@ -3,7 +3,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#pragma once
+#ifndef NETSER_PLATFORM_GENERIC_HPP__
+#define NETSER_PLATFORM_GENERIC_HPP__
+
 #include "netser_config.hpp"
 
 namespace netser {
@@ -53,3 +55,5 @@ namespace netser {
         return mirror_byte<0>(v) | mirror_byte<1>(v) | mirror_byte<2>(v) | mirror_byte<3>(v) | mirror_byte<4>(v) | mirror_byte<5>(v) | mirror_byte<6>(v) | mirror_byte<7>(v);
     }
 }
+
+#endif

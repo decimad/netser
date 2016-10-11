@@ -1,4 +1,11 @@
-#pragma once
+//          Copyright Michael Steinberg 2016
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef NETSER_INTEGER_WRITE_HPP__
+#define NETSER_INTEGER_WRITE_HPP__
+
 #include <netser/integer_shared.hpp>
 #include <netser/range.hpp>
 
@@ -328,6 +335,6 @@ namespace netser {
         return detail::write_integer_algorithm::write_integer<>( it );
     }
 
-
-
 }
+
+#endif

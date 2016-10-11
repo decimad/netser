@@ -3,7 +3,10 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#pragma once
+#ifndef NETSER_LAYOUT_FIELDS_HPP__
+#define NETSER_LAYOUT_FIELDS_HPP__
 
 #include <netser/integer.hpp>
 #include <netser/static_array.hpp>
+
+#endif

@@ -47,7 +47,7 @@ GTEST_TEST(integer_test, single_write32)
     using uint_layout = layout< net_uint32 >;
     using uint_mapping = mapping_list< identity >;
 
-    // Single read
+    // Single writes
     write<uint_layout, uint_mapping>( make_aligned_ptr<4, 0>( &dest, &log ), src );
 
     EXPECT_EQ( dest, src_swapped );
@@ -56,7 +56,7 @@ GTEST_TEST(integer_test, single_write32)
     dest = 0;
     log.clear();
 
-    // Two short reads
+    // Two short writes
     write<uint_layout, uint_mapping>( make_aligned_ptr<2, 0>( &dest, &log ), src );
 
     EXPECT_EQ( dest, src_swapped );
@@ -66,7 +66,7 @@ GTEST_TEST(integer_test, single_write32)
     log.clear();
     dest = 0;
 
-    // Four byte reads
+    // Four byte writes
     write<uint_layout, uint_mapping>( make_aligned_ptr<1, 0>( &dest, &log ), src );
     EXPECT_EQ( dest, src_swapped );
     ASSERT_EQ( log.size(), 4 );

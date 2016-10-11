@@ -3,7 +3,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#pragma once
+#ifndef NETSER_ZIPPED_HPP__
+#define NETSER_ZIPPED_HPP__
+
 #include <netser/layout.hpp>
 #include <netser/mapping.hpp>
 #include <netser/integer.hpp>
@@ -109,3 +111,5 @@ namespace netser {
 
 #define ZIPPED_MEMBER( Zipped, MemberAccess ) \
     ::netser::detail::zipped_member< Zipped, decltype(::netser::detail::deduce_class(&MemberAccess)), std::remove_reference_t<decltype(::netser::detail::deduce_type(&MemberAccess))>, &MemberAccess >
+
+#endif

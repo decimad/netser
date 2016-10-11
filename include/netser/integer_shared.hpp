@@ -1,4 +1,11 @@
-#pragma once
+//          Copyright Michael Steinberg 2016
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef NETSER_INTEGER_SHARED_HPP__
+#define NETSER_INTEGER_SHARED_HPP__
+
 #include <type_traits>
 #include <netser/zip_iterator.hpp>
 
@@ -46,3 +53,5 @@ namespace netser {
     }
 
 }
+
+#endif

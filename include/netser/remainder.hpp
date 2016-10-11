@@ -1,4 +1,11 @@
-#pragma once
+//          Copyright Michael Steinberg 2016
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef NETSER_REMAINDER_HPP__
+#define NETSER_REMAINDER_HPP__
+
 //#include <limits>
 
 namespace netser {
@@ -62,4 +69,6 @@ inline void test_remainder() {
 */
 
 }
+
+#endif
 

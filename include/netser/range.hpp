@@ -218,6 +218,38 @@ namespace netser {
 
     }
 
+    // while_
+    //
+    //
+    template< typename Range, template< typename > class Condition, template< typename, typename > class Body, typename State, bool Finish = Range::empty() >
+    struct while_;
+
+    namespace detail {
+
+        template< typename Range, template< typename > class Condition, template< typename, typename > class Body, typename State, bool Finish = !Condition< deref_t< Range > >::value >
+        struct while_inner
+        {
+            using type = typename while_< next_t< Range >, Condition, Body, typename Body< deref_t< Range >, State >::type >::type;
+        };
+
+        template< typename Range, template< typename > class Condition, template< typename, typename > class Body, typename State >
+        struct while_inner< Range, Condition, Body, State, true >
+        {
+            using type = State;
+        };
+
+    }
+
+    template< typename Range, template< typename > class Condition, template< typename, typename > class Body, typename State, bool Finish >
+    struct while_ {
+        using type = typename detail::while_inner< Range, Condition, Body, State >::type;
+    };
+
+    template< typename Range, template< typename > class Condition, template< typename, typename > class Body, typename State >
+    struct while_< Range, Condition, Body, State, true >
+    {
+        using type = State;
+    };
 }
 
 

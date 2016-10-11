@@ -8,6 +8,7 @@
 
 #include <type_traits>
 #include <netser/remainder.hpp>
+#include <netser/type_list.hpp>
 
 #ifdef NETSER_DEBUG_CONSOLE
 #include <iostream>
@@ -23,13 +24,37 @@ public:
 };
 #endif
 
-template< typename Type, size_t Alignment, size_t Defect = 0, int MinOffset = 0 >
+template< int Begin, int End >
+struct two_side_limit_range {
+    static constexpr bool contains( int begin, int end )
+    {
+        return begin >= Begin && end < End;
+    }
+
+    template< int Offset >
+    using offset_range = two_side_limit_range< Begin - Offset, End - Offset >;
+};
+
+template< int Begin >
+struct limit_begin_range {
+    static constexpr bool contains( int begin, int end )
+    {
+        return begin >= Begin;
+    }
+
+    template< int Offset >
+    using offset_range = limit_begin_range< Begin - Offset >;
+};
+
+template< typename Type, size_t Alignment, size_t Defect = 0, typename OffsetRange = limit_begin_range<0> >
 struct aligned_ptr {
     using value_type = Type;
     using type = Type* const;
 
     // Alignment + Defect are actually Alignment+Defect in GCC parlance, which form a residue class
-    using residue = residue_class< Alignment, Defect >;
+    using residue      = residue_class< Alignment, Defect >;
+
+    using offset_range = OffsetRange;
 
 private:
     static constexpr size_t pointer_alignment = residue::alignment();
@@ -91,8 +116,7 @@ public:
 
     template< int Offset >
     constexpr std::remove_const_t<type> get_offset() const {
-        static_assert( Offset >= MinOffset, "Getting pointer to invalid memory location." );
-
+        static_assert( offset_range::contains(Offset, Offset+sizeof(type)), "Getting pointer to invalid memory location." );
 #ifdef __GNUC__
         // We can hint the alignment+defect, maybe GCC can put it to use
         return reinterpret_cast<type>(__builtin_assume_aligned(
@@ -140,7 +164,7 @@ public:
         Type,
         residue::template offset_class<Offset>::divisor,
         residue::template offset_class<Offset>::remainder,
-        MinOffset
+        typename OffsetRange::template offset_range<Offset>
     >;
 
     // static_offset
@@ -191,7 +215,7 @@ public:
 #endif
 };
 
-template< size_t Alignment, int Offset = 0, size_t Defect = 0, int MinOffset = 0, typename Arg >
+template< size_t Alignment, size_t Defect = 0, int Offset = 0, typename OffsetRange = limit_begin_range<0>, typename Arg >
 auto make_aligned_ptr( Arg* arg
 #ifdef NETSER_DEREFERENCE_LOGGING
     , dereference_logger* logger = nullptr
@@ -201,15 +225,61 @@ auto make_aligned_ptr( Arg* arg
 -> typename aligned_ptr< Arg, Alignment, Defect, MinOffset >::template static_offset_t<Offset>
 #endif
 {
-    return aligned_ptr< Arg, Alignment, Defect, MinOffset >( arg, logger ).template static_offset<Offset>();
+    return aligned_ptr< Arg, Alignment, Defect, OffsetRange >( arg, logger ).template static_offset<Offset>();
 }
 
-template< int Offset, size_t Alignment, size_t Defect, int MinOffset, typename Type >
-auto offset( aligned_ptr<Type, Alignment, Defect, MinOffset> ptr )
+template< int Offset, size_t Alignment, size_t Defect, typename OffsetRange, typename Type >
+auto offset( aligned_ptr<Type, Alignment, Defect, OffsetRange> ptr )
 {
     return ptr.template static_offset<Offset>();
 }
 
+
+    namespace detail {
+
+        template< typename AlignedPtr, int OffsetBytes >
+        struct range_filter_move
+        {
+            template< typename AccessType >
+            struct filter {
+                ;
+                static constexpr bool value =
+                    (AlignedPtr::get_max_alignment() % AccessType::alignment != 0) ||
+                    !AlignedPtr::offset_range::contains(
+                        AlignedPtr::align_down( OffsetBytes, AccessType::alignment ),
+                        AlignedPtr::align_down( OffsetBytes + int(AccessType::size), AccessType::alignment )
+                    );
+            };
+        };
+
+        template< typename AlignedPtr, int OffsetBytes >
+        struct range_filter_nomove
+        {
+            template< typename AccessType >
+            struct filter {
+                ;
+                static constexpr bool value =
+                    (AlignedPtr::get_access_alignment(OffsetBytes) % AccessType::alignment != 0) ||
+                    !AlignedPtr::offset_range::contains(
+                        OffsetBytes,
+                        OffsetBytes + int( AccessType::size )
+                    );
+            };
+        };
+
+    }
+
+    // filtered_accesses_t
+    // Filters out accesses from a list of accesses that would violate alignment and range restrictions
+    // of the given aligned pointer.
+    template< typename AlignedPtr, int OffsetBytes, typename AccessList >
+    using filtered_accesses_t = erase_if_t< platform_memory_accesses, detail::range_filter_move< AlignedPtr, OffsetBytes >::template filter >;
+
+    // filtered_accesses_t
+    // Filters out accesses that cannont be done
+    //
+    template< typename AlignedPtr, int OffsetBytes, typename AccessList >
+    using filtered_accesses_nomove_t = erase_if_t< platform_memory_accesses, detail::range_filter_nomove< AlignedPtr, OffsetBytes >::template filter >;
 }
 
 #endif

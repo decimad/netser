@@ -94,6 +94,23 @@ namespace netser {
     template< typename ListType >
     constexpr size_t list_size_v = list_size< ListType >::value;
 
+    //
+    //
+    //
+    template< typename T >
+    struct is_empty {
+        static constexpr bool value = true;
+    };
+
+    template< template< typename... > class List, typename First, typename... Tail >
+    struct is_empty< List< First, Tail... > >
+    {
+        static constexpr bool value = false;
+    };
+
+    template< typename List >
+    constexpr bool is_empty_v = is_empty< List >::value;
+
     // reverse_t< List >
     // reverse the elements of a type_list
     template< typename List >
@@ -189,40 +206,20 @@ namespace netser {
     template< typename List, template< typename > class Transformer >
     using transform_t = typename detail::transform_list_struct< List, Transformer >::type;
 
-    namespace detail {
+    // clear
+    //
+    //
+    template< typename T >
+    struct clear;
 
-        template< typename T >
-        struct copy_list_type;
+    template< template< typename... > class ListType, typename... Args >
+    struct clear< ListType< Args... > >
+    {
+        using type = ListType< >;
+    };
 
-        template< template< typename... > class ListType, typename... Elements >
-        struct copy_list_type< ListType<Elements...> > {
-            using type = ListType< >;
-        };
-
-        template< typename List, template< typename > class Functor, typename Result = typename copy_list_type< List >::type, bool IsEmpty = (list_size_v<List> == 0) >
-        struct erase_if
-        {
-            using type = Result;
-        };
-
-        template< typename List, template< typename > class Functor, typename Result >
-        struct erase_if< List, Functor, Result, false >
-        {
-            using type = typename erase_if<
-                pop_front_t< List >,
-                Functor,
-                std::conditional_t<
-                    Functor< front_t< List > >::value,
-                    Result,
-                    push_back_t< Result, front_t< List > >
-                >
-            >::type;
-        };
-
-    }
-
-    template< typename TypeList, template< typename > class Functor >
-    using erase_if_t = typename detail::erase_if< TypeList, Functor >::type;
+    template< typename T >
+    using clear_t = typename clear< T >::type;
 
     // Declare are basic type list that is compatible with the Range concept
     //
@@ -265,5 +262,56 @@ namespace netser {
             return false;
         }
     };
+
+    // MSVC doesn't currently support template member aliases as means to binding arguments in "functors",
+    // that's why we support passing in additional arguments to erase_if_t
+    namespace detail {
+
+        template< typename List, template< typename... > class Functor, typename Result = clear_t< List >, bool IsEmpty = is_empty<List>::value >
+        struct erase_if
+        {
+            using type = Result;
+        };
+
+        template< typename List, template< typename > class Functor, typename Result >
+        struct erase_if< List, Functor, Result, false >
+        {
+            using type = typename erase_if<
+                pop_front_t< List >,
+                Functor,
+                std::conditional_t<
+                    Functor< front_t< List > >::value,
+                    Result,
+                    push_back_t< Result, front_t< List > >
+                >
+            >::type;
+        };
+
+    }
+
+    template< typename TypeList, template< typename > class Functor >
+    using erase_if_t = typename detail::erase_if< TypeList, Functor >::type;
+
+    // concat - concatenate type lists
+    //
+    //
+    template< typename... Lists >
+    struct concat {
+    };
+
+    template< template< typename... > class ListType, typename... Args1, typename... Args2, typename... Tail >
+    struct concat< ListType< Args1... >, ListType< Args2... >, Tail... >
+    {
+        using type = typename concat< ListType< Args1..., Args2... >, Tail... >::type;
+    };
+
+    template< typename List >
+    struct concat< List >
+    {
+        using type = List;
+    };
+
+    template< typename... Lists >
+    using concat_t = typename concat< Lists... >::type;
 
 }

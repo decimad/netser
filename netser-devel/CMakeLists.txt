@@ -1,6 +1,6 @@
 
 include_directories( ../include )
-include_directories( . )
+include_directories( ../netser-devel )
 
 set( NETSER_HEADERS
     ../include/netser/aligned_ptr.hpp
@@ -24,6 +24,7 @@ source_group(netser FILES ${NETSER_HEADERS})
 
 set( NETSER_DEVEL_FILES
     main.cpp
+    merge_sort.hpp
 )
 
 source_group(source FILES ${NETSER_DEVEL_FILES})

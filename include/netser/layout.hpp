@@ -7,7 +7,6 @@
 #include <type_traits>
 #include "netser_config.hpp"
 #include <netser/utility.hpp>
-#include <netser/layout.hpp>
 #include <netser/mapping.hpp>
 #include <netser/type_list.hpp>
 #include <netser/aligned_ptr.hpp>
@@ -259,6 +258,8 @@ namespace netser {
         static constexpr size_t offset = Offset;
 
         static constexpr bool is_end   = false;
+        static constexpr bool empty() { return false; }
+
     };
 
     template< typename Layout, size_t Offset >
@@ -269,6 +270,7 @@ namespace netser {
 
         static constexpr size_t offset = Offset;
         static constexpr bool is_end = true;
+        static constexpr bool empty() { return true; }
     };
 
     //

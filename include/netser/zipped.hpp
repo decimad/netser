@@ -29,7 +29,7 @@ namespace netser {
 
         template< typename Layout, typename Mapping, typename LayoutElement, typename MappingElement, typename... Tail >
         struct unzip_pair
-        		: public unzip< push_back_t< Layout, LayoutElement >, push_back_t< Mapping, MappingElement >, Tail...>
+                : public unzip< push_back_t< Layout, LayoutElement >, push_back_t< Mapping, MappingElement >, Tail...>
         {};
 
         template< typename Layout, typename Mapping, typename LayoutArg, typename... Tail >
@@ -93,14 +93,14 @@ namespace netser {
         return read_inline<layout, mapping>(src, std::forward<Arg>(dest));
     }
 
-    template<typename PtrType, size_t PtrAlignment, size_t PtrDefect, int PtrNegOffset, typename Arg >
-    auto operator >> (aligned_ptr<PtrType, PtrAlignment, PtrDefect, PtrNegOffset> ptr, Arg&& arg)
+    template<typename PtrType, size_t PtrAlignment, size_t PtrDefect, typename PtrOffsetRange, typename Arg >
+    auto operator >> (aligned_ptr<PtrType, PtrAlignment, PtrDefect, PtrOffsetRange> ptr, Arg&& arg)
     {
         return read_zipped_inline<decltype(default_zipped(std::declval<Arg>()))> (ptr, std::forward<Arg>(arg));
     }
 
-    template<typename PtrType, size_t PtrAlignment, size_t PtrDefect, int PtrNegOffset, typename Arg >
-    auto operator << (aligned_ptr<PtrType, PtrAlignment, PtrDefect, PtrNegOffset> ptr, Arg&& arg)
+    template<typename PtrType, size_t PtrAlignment, size_t PtrDefect, typename PtrOffsetRange, typename Arg >
+    auto operator << (aligned_ptr<PtrType, PtrAlignment, PtrDefect, PtrOffsetRange> ptr, Arg&& arg)
     {
         return write_zipped_inline<decltype(default_zipped(std::declval<Arg>()))>(ptr, std::forward<Arg>(arg));
     }

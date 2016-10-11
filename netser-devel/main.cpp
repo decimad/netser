@@ -2,6 +2,7 @@
 #define NETSER_DEREFERENCE_LOGGING
 #include <netser/netser.hpp>
 #include <netser/range.hpp>
+#include <merge_sort.hpp>
 #include <string>
 #include <cassert>
 
@@ -17,8 +18,6 @@ public:
         std::cout << "Access at " << std::hex << memory_location << " (+" << offset << "): " << type_name << " (size: " << type_size << ", align: " << type_alignment << ")\n";
     }
 };
-
-
 
 int type_list_test()
 {
@@ -83,8 +82,35 @@ int test_integral_range()
     return 0;
 }
 
+
+template< typename A, typename B >
+struct less
+{
+    static constexpr bool value = (A::value < B::value);
+};
+
+
+void test_align_filter()
+{
+    using ptr_type = netser::aligned_ptr<void*, 4, 1, netser::two_side_limit_range<-1, 5>>;
+
+    using filtered_list = netser::filtered_accesses_t< ptr_type, 2, netser::platform_memory_accesses >;
+    std::cout << typeid( filtered_list ).name() << "\n";
+
+/*
+    constexpr size_t size = netser::detail::discover_write_span_size<
+        netser::layout<
+        >::begin
+    >::value;
+*/
+}
+
+
+
 int main()
 {
+    test_align_filter();
+
     unsigned int source = 15 << 24;
     unsigned int dest = 0;
 
@@ -101,4 +127,5 @@ int main()
 
     concat_range_test();
     test_integral_range();
+
 }

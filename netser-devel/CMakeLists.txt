@@ -10,6 +10,7 @@ set( NETSER_HEADERS
 	../include/netser/integer_write.hpp
 	../include/netser/integer_shared.hpp
     ../include/netser/layout.hpp
+	../include/netser/layout_iterator.hpp
     ../include/netser/layout_fields.hpp
     ../include/netser/mapping.hpp
     ../include/netser/mem_access.hpp
@@ -20,6 +21,9 @@ set( NETSER_HEADERS
     ../include/netser/utility.hpp
     ../include/netser/zip_iterator.hpp
     ../include/netser/zipped.hpp
+	../include/netser/read.hpp
+	../include/netser/write.hpp
+	../include/netser/fill_random.hpp
     ../include/netser/netser.hpp
 )
 

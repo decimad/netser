@@ -34,18 +34,28 @@ namespace netser {
                 : public unzip< push_back_t< Layout, LayoutElement >, push_back_t< Mapping, MappingElement >, Tail...>
         {};
 
+        // Partial specialization for a <layout, struct-member-mapping> pair.
         template< typename Layout, typename Mapping, typename LayoutArg, typename... Tail >
         struct unzip< Layout, Mapping, LayoutArg, Tail... >
             : public unzip_pair < Layout, Mapping, LayoutArg, Tail... >
         {
         };
 
+        // Nested zipped-member specialization
         template< typename... LayoutArgs, typename... MappingArgs, typename Zipped, typename Class, typename Type, Type (Class::*Pointer), typename... Tail >
         struct unzip< layout< LayoutArgs... >, mapping_list< MappingArgs... >, zipped_member< Zipped, Class, Type, Pointer >, Tail... >
             : public unzip< layout< LayoutArgs..., typename zipped_member< Zipped, Class, Type, Pointer >::layout>, mapping_list< MappingArgs..., typename zipped_member< Zipped, Class, Type, Pointer >::mapping >, Tail... >
         {
         };
 
+        // "reserved" partial specialization (-> expands to a <net_uint, constant=0> pair).
+        template< typename... LayoutArgs, typename... MappingArgs, size_t Bits, typename... Tail >
+        struct unzip< layout< LayoutArgs... >, mapping_list< MappingArgs... >, reserved< Bits >, Tail... >
+            : public unzip< layout< LayoutArgs..., net_uint< Bits > >, mapping_list< MappingArgs..., constant<size_t, 0> >, Tail... >
+        {
+        };
+
+        // Nested zipped partial specialization
         template< typename... LayoutArgs, typename... MappingArgs, typename... ZippedArgs, typename... Tail >
         struct unzip< layout< LayoutArgs... >, mapping_list< MappingArgs... >, zipped< ZippedArgs... >, Tail... >
             : public unzip< layout< LayoutArgs..., typename zipped<ZippedArgs...>::layout >, mapping_list< MappingArgs..., typename zipped<ZippedArgs...>::mapping >, Tail... >
@@ -105,6 +115,21 @@ namespace netser {
     auto operator << (aligned_ptr<PtrType, PtrAlignment, PtrDefect, PtrOffsetRange> ptr, Arg&& arg)
     {
         return write_zipped_inline<decltype(default_zipped(std::declval<Arg>()))>(ptr, std::forward<Arg>(arg));
+    }
+
+    // fill_mapping_random
+    // helper function for default_zipped mappings
+    //
+    //
+    template< typename T >
+    void fill_random( T&& arg )
+    {
+        using zipped_type = decltype(default_zipped( arg ));
+        using layout_type = typename zipped_type::layout::begin;
+        using mapping_type = typename zipped_type::mapping;
+
+        auto it = make_mapping_iterator<mapping_type>( arg );
+        fill_mapping_random< layout_type >( it );
     }
 
 }

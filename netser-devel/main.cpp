@@ -5,6 +5,8 @@
 #include <merge_sort.hpp>
 #include <string>
 #include <cassert>
+#include <netser/fill_random.hpp>
+#include <netser/static_array.hpp>
 
 using netser::type_list;
 using netser::next_t;
@@ -52,80 +54,127 @@ struct print_value
     }
 };
 
+#include <array>
+using namespace netser;
 
-int concat_range_test()
-{
-    using list1 = type_list< int, short, float, char, int, double >;
-    using list2 = type_list< short, list1 >;
+using uint16 = unsigned short;
+using uint8 = unsigned char;
+using int8 = signed char;
 
-    using range = netser::ct::concat_range< list1, list2 >;
-    print_typeid<deref_t<range>>()();
+struct ClockIdentity {
+    std::array<uint8, 8> identity;
 
-    std::cout << "Range for_each:\n";
-    netser::ct::for_each< print_typeid >( range() );
-    std::cout << "\n";
-
-    std::cout << "Iterator for_each:\n";
-    netser::ct::for_each< print_typeid >( range::begin(), range::end() );
-    std::cout << "\n";
-
-    return 0;
-}
-
-int test_integral_range()
-{
-    using range1 = netser::ct::integral_range<int,  0, 10>;
-    using range2 = netser::ct::integral_range<int, 10, 20>;
-
-
-    netser::ct::for_each< print_value >( netser::ct::concat_range< range1, range2 >() );
-    return 0;
-}
-
-
-template< typename A, typename B >
-struct less
-{
-    static constexpr bool value = (A::value < B::value);
+    bool operator==( const ClockIdentity& other ) const
+    {
+        return identity == other.identity;
+    }
 };
 
+// ClockIdentity
+using clock_identity_zipped = netser::zipped<
+    net_uint<8>[8], MEMBER1( ClockIdentity::identity )
+>;
 
-void test_align_filter()
-{
-    using ptr_type = netser::aligned_ptr<void*, 4, 1, netser::two_side_limit_range<-1, 5>>;
+struct PortIdentity {
+    ClockIdentity clock;
+    uint16 port;
 
-    using filtered_list = netser::filtered_accesses_t< ptr_type, 2, netser::platform_memory_accesses >;
-    std::cout << typeid( filtered_list ).name() << "\n";
+    bool operator==( const PortIdentity& other ) const
+    {
+        return clock == other.clock
+            && port  == other.port;
+    }
+};
 
-/*
-    constexpr size_t size = netser::detail::discover_write_span_size<
-        netser::layout<
-        >::begin
-    >::value;
-*/
-}
+// PortIdentity
+using port_identity_zipped = netser::zipped<
+    ZIPPED_MEMBER( clock_identity_zipped, PortIdentity::clock )
+    , net_uint<16>, MEMBER1( PortIdentity::port )
+>;
 
+struct Header {
+    enum class Field0Flags {
+        AlternateMaster = 0x01,
+        TwoStep = 0x02,
+        Unicast = 0x04,
+        ProfileSpecific1 = 0x20,
+        ProfileSpecific2 = 0x40,
+        Security = 0x80,
+    };
 
+    enum class Field1Flags {
+        Li61 = 1,
+        Li59 = 2,
+        UtcValid = 4,
+        PtpTimescale = 8,
+        TimeTraceable = 16,
+        FrequencyTraceable = 32
+    };
+
+    PortIdentity source_port_identity;
+    int64 correction_field;
+    uint16 message_length;
+    uint16 sequence_id;
+    uint8 transport_specific;
+    uint8 message_type;
+    uint8 version_ptp;
+    uint8 domain_number;
+    uint8 flag_field0;
+    uint8 flag_field1;
+    uint8 control_field;
+    int8 log_message_interval;
+
+    bool operator==( const Header& other ) const
+    {
+        return source_port_identity == other.source_port_identity
+            && correction_field == other.correction_field
+            && message_length == other.message_length
+            && sequence_id == other.sequence_id
+            && transport_specific == other.transport_specific
+            && message_type == other.message_type
+            && version_ptp == other.version_ptp
+            && domain_number == other.domain_number
+            && flag_field0 == other.flag_field0
+            && flag_field1 == other.flag_field1
+            && control_field == other.control_field
+            && log_message_interval == other.log_message_interval;
+    }
+};
+
+using header_zipped = netser::zipped<
+      net_uint< 4>, MEMBER1( Header::transport_specific )
+    , net_uint< 4>, MEMBER1( Header::message_type )
+    , reserved< 4>
+    , net_uint< 4>, MEMBER1( Header::version_ptp )
+    , net_uint<16>, MEMBER1( Header::message_length )
+    , net_uint< 8>, MEMBER1( Header::domain_number )
+    , reserved< 8>
+    , net_uint< 8>, MEMBER1( Header::flag_field0 )
+    , net_uint< 8>, MEMBER1( Header::flag_field1 )
+    , net_uint<64>, MEMBER1( Header::correction_field )
+    , reserved<32>
+    , ZIPPED_MEMBER( port_identity_zipped, Header::source_port_identity )
+    , net_uint<16>, MEMBER1( Header::sequence_id )
+    , net_uint< 8>, MEMBER1( Header::control_field )
+    , net_int < 8>, MEMBER1( Header::log_message_interval )
+>;
+
+header_zipped default_zipped( Header );
 
 int main()
 {
-    test_align_filter();
+    char buffer[128];
+    Header header_src;
+    Header header_dest;
 
-    unsigned int source = 15 << 24;
-    unsigned int dest = 0;
+    header_src.control_field = 157;
+    header_src.correction_field = 134734235235ull;
+    header_src.domain_number = 7;
+    header_src.flag_field0   = 13;
 
-    using layout  = netser::layout< netser::net_uint<32> >;
-    using mapping = netser::mapping_list< netser::identity_member >;
+    fill_random( header_src );
 
-    print_logger logger;
-
-    auto ptr = netser::make_aligned_ptr<4>(&source, &logger);
-
-    netser::read<layout, mapping>( ptr, dest );
-
-    assert( dest == 15 );
-
-    concat_range_test();
-    test_integral_range();
+    make_aligned_ptr<4>( buffer ) << header_src;
+    make_aligned_ptr<4>( buffer ) >> header_dest;
 
 }

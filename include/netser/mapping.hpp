@@ -395,6 +395,8 @@ namespace netser {
         static constexpr size_t size = 1;
         using pop = detail::mapping_pop_result< constant, mapping_list< >, dereference_stack< constant > >;
 
+        using value_type = T;
+
         template< typename... Arg >
         static detail::constant_reference<T, value> dereference( Arg&&... )
         {

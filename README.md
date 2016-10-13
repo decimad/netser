@@ -1,28 +1,64 @@
-# netser
-Network packet binary serialization
+# netser - Network packet serialization
+This lib was motivated when I wrote platform specific networt-packet serialization code. I'm no person that takes pride of having shifts, masking and hexadecimal constants everywhere. Added complication was that my microcontroller platform would not allow unaligned reads and writes. This lib aims to solve this, by generating only aligned reads and writes which are described in a platform-dependent list.
 
-This lib has two motivations:
-- Remove bit fiddling code from protocol level code
+The main criteria for this lib are
+- No bitshuffling code in protocol level sources
+- Platform agnostic memory access patterns
+
+The whole lib is built around aligned_ptr, packet field (type-)lists and structure description lists.
+
+A motivational example of what this lib aims to provide:
 ```
 	struct my_struct {
 		unsigned int int_member1;
 		unsigned int int_member2;
 	};
 
-	// Zipped Layout <-> Mapping definition
+	// Zipped Layout <-> Mapping definition: Describe the packet layout and its mapping to
+    // structure members
 	using zipped = netser::zipped< 
-		net_uint<15>, MEMBER1(my_struct, int_member1),
-		net_uint<17>, MEMBER2(my_struct, int_member2)
+		net_uint<15>, MEMBER1(&my_struct::int_member1),
+		net_uint<17>, MEMBER1(&my_struct::int_member2)
 	>;
 	
 	// Allow netser to find the default zipped definition for my_struct
+    // by providing an overload of the function "default_zipped" inside the
+    // namespace my_struct lives in (ADL).
 	zipped default_zipped(my_struct);
 	
-	char buffer[32];
-	my_struct obj;
-	netser::make_aligned_ptr<1>(buffer) >> obj;  // read from 1-aligned buffer
-	netser::make_aligned_ptr<2>(buffer) << obj;  // write to 2-aligned buffer
+    void foo()
+    {
+		char buffer[32];
+		my_struct obj;
+		netser::make_aligned_ptr<1>(buffer) >> obj;  // read  "zipped" from 1-aligned buffer
+		netser::make_aligned_ptr<2>(buffer) << obj;  // write "zipped" to 2-aligned buffer
+    }
 ```
+
+###aligned_ptr
+The aligned_ptr template encapsulates a (packet-buffer-)pointer together with its alignment parameters and a valid-access-range:
+
+	template< typename T, size_t Alignment, size_t Defect, typename AccessRange >
+	struct aligned_ptr {...};
+
+The pair {Alignment, Defect} together defines the alignment residue class the pointer value lives in. If the pointer f.e. is 4-byte aligned, this pair would be {4,0}. If on the other hand you know the pointer lives in a 4-byte aligned buffer but is at an offset that only has 2-byte alignment, you would state {4,2} instead, so the library knows that the offsets {+-2, +-6, ...} would be 4-byte aligned.
+
+The template parameter AccessRange can be used to tell the library more information of valid access offsets in the buffer pointed to by this pointer. The type AccessRange must contain a static constexpr member function
+
+	static constexpr bool contains( int begin, int end );
+
+which returns true iff an access beginning at "begin" and ending at "end" would be inside the range of the buffer pointed to by this pointer. There are two predefined implementations
+
+	template< int Begin, int End >
+	struct two_side_limit_range;	// restrict accesses to the given range [Begin, End)
+	
+    template< int Begin >
+    struct one_side_limit_range;	// restrict accesses to offsets >= Begin
+
+aligned_ptr defaults to using one_side_limit_range<0>, meaning the generated accesses cannot span over the beginning of the buffer.
+
+- Remove bit fiddling code from protocol level code
+
   Now from a definition standpoint, the list based approach works best for big-
   endian buffers, since their bit positioning does not depend on access sizes.
   That's why there's no special provision for non-byte spanning little-endian

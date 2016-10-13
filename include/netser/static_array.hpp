@@ -113,6 +113,15 @@ namespace netser {
             }
         }
 
+        // 
+        template< typename ZipIterator, typename Generator >
+        static NETSER_FORCE_INLINE void fill_random( ZipIterator it, Generator&& generator )
+        {
+            for( size_t i=0; i<Size; ++i) {
+                ::netser::fill_mapping_random< typename layout<Field>::begin >( make_mapping_iterator< mapping_list<identity_member> >(it.dereference()[i]), std::forward<Generator>(generator) );
+            }
+        }
+
     };
 
 }

@@ -15,3 +15,4 @@ endfunction()
 
 add_gtest_test( integer-read  integer-read.cpp )
 add_gtest_test( integer-write integer-write.cpp )
+add_gtest_test( zipped zipped.cpp )

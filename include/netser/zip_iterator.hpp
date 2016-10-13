@@ -17,7 +17,7 @@ struct zip_iterator
         : layout_( lay_it ), mapping_( map_it )
     {}
 
-    using layout_iterator = LayoutIterator;
+    using layout_iterator  = LayoutIterator;
     using mapping_iterator = MappingIterator;
 
     static constexpr bool is_end = LayoutIterator::is_end || MappingIterator::is_end;
@@ -25,8 +25,10 @@ struct zip_iterator
 private:
     const layout_iterator  layout_;
     const mapping_iterator mapping_;
-    using next_layout_iterator = decltype(layout_.advance());
+
+    using next_layout_iterator  = decltype(layout_.advance());
     using next_mapping_iterator = decltype(mapping_.advance());
+    using next_iterator_type    = zip_iterator< next_layout_iterator, next_mapping_iterator >;
 
 public:
     constexpr auto advance() const

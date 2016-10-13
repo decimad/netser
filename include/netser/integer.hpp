@@ -40,6 +40,19 @@ namespace netser {
         using stage_type    = detail::auto_stage_type_t< Bits >;
         using integral_type = std::conditional_t< Signed, std::make_signed_t< stage_type >, std::make_unsigned_t< stage_type > >;
 
+        // min, max utility
+        //
+        //
+        static constexpr stage_type min()
+        {
+            return std::numeric_limits<stage_type>::min() & bit_mask<stage_type>(Bits);
+        }
+
+        static constexpr stage_type max()
+        {
+            return std::numeric_limits<stage_type>::max() & bit_mask<stage_type>( Bits - (Signed ? 1 : 0) );
+        }
+
         // defined in integer_read.hpp
         template< typename LayoutIterator >
         static constexpr NETSER_FORCE_INLINE integral_type read( LayoutIterator it );
@@ -51,6 +64,14 @@ namespace netser {
         // defined int integer_write.hpp
         template< typename ZipIterator >
         static constexpr NETSER_FORCE_INLINE auto write_span( ZipIterator it );
+
+        // 
+        template< typename MappingIterator, typename Generator >
+        static NETSER_FORCE_INLINE void fill_random( MappingIterator it, Generator&& generator )
+        {
+            std::uniform_int_distribution< std::conditional_t< std::is_same<stage_type, unsigned char>::value, unsigned short, stage_type> > dis( min(), max() );
+            it.dereference() = static_cast<stage_type>(dis(generator));
+        }
 
         template< typename DestType, typename T >
         static constexpr DestType extract(T val) {

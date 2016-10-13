@@ -124,13 +124,13 @@ namespace netser {
         using transformed_list = transform_t< type_list< Layouts... >, detail::layout_transformer >;
 
     //
-    //	Determine Size and Count of contained fields and/or layouts.
+    //  Determine Size and Count of contained fields and/or layouts.
     //
     private:
         template< typename List, typename Bogus = void >
         struct count_fields_size_struct
 #ifdef _MSC_VER
-        {	// prevent warning C4348 on MS Visual C++ (Bogus is needed on gcc, because there must not be full specializations of member class templates).
+        {   // prevent warning C4348 on MS Visual C++ (Bogus is needed on gcc, because there must not be full specializations of member class templates).
             static_assert(std::is_same<Bogus, void>::value, "Bad usage!");
         }
 #endif
@@ -236,7 +236,6 @@ namespace netser {
 
     }
 
-    //
     // layout_sequence_value_type
     // layout_iterator_ct dereferences into an instance of this template, so they are the value_type of the layout container.
     // member-fn transform_buffer can be used to adjust the buffer pointer in case of dynamic-length-fields
@@ -437,107 +436,8 @@ namespace netser {
 
     }
 
-    namespace detail {
-
-        template< typename ZipIterator, bool IsEnd = ZipIterator::is_end >
-        struct read_zip_iterator_struct {
-            static NETSER_FORCE_INLINE auto read( ZipIterator it )
-            {
-                using type = decltype(deref_t<typename ZipIterator::layout_iterator::ct_iterator>::field::read_span(it));
-
-                auto result = deref_t<typename ZipIterator::layout_iterator::ct_iterator>::field::read_span( it );
-                return read_zip_iterator_struct< type >::read( result );
-            }
-        };
-
-        template< typename ZipIterator >
-        struct read_zip_iterator_struct< ZipIterator, true >
-        {
-            static NETSER_FORCE_INLINE auto read( ZipIterator it )
-            {
-                static_assert(ZipIterator::layout_iterator::ct_iterator::offset%8 == 0, "Must!");
-                return it.layout().get().template static_offset< int(ZipIterator::layout_iterator::ct_iterator::offset)/8 >();
-            }
-        };
-
-        template< typename ZipIterator >
-        NETSER_FORCE_INLINE auto read_zip_iterator( ZipIterator it )
-        {
-            // Need partial specialization because on each non-empty level, the iterators need to be dereferenced (which is not valid for the iterator == end)
-            return read_zip_iterator_struct< ZipIterator >::read( it );
-        }
-
-        template< typename T >
-        auto advance_test(T it)
-        {
-            return it.advance();
-        }
-
-
-        template< typename ZipIterator, bool IsEnd = ZipIterator::is_end >
-        struct write_zip_iterator_struct {
-            static NETSER_FORCE_INLINE auto write(ZipIterator it)
-            {
-#ifdef NETSER_DEBUG_CONSOLE
-                std::cout << "Writing span:\n";
-#endif
-                auto result = deref_t<typename decltype(it.layout())::ct_iterator>::field::write_span(it);
-
-#ifdef NETSER_DEBUG_CONSOLE
-                std::cout << "Span written.\n";
-#endif
-                return write_zip_iterator_struct< decltype(result) >::write(result);
-            }
-        };
-
-        template< typename ZipIterator >
-        struct write_zip_iterator_struct< ZipIterator, true >
-        {
-            static NETSER_FORCE_INLINE auto write(ZipIterator it)
-            {
-                return it.layout().get().template static_offset< ZipIterator::layout_iterator::ct_iterator::offset >();
-            }
-        };
-
-        template< typename ZipIterator >
-        NETSER_FORCE_INLINE auto write_zip_iterator(ZipIterator it)
-        {
-            // Need partial specialization because on each non-empty level, the iterators need to be dereferenced (which is not valid for the iterator == end)
-            return write_zip_iterator_struct< ZipIterator >::write(it);
-        }
-
-    }
-
-
-    // read< Layout, Mapping >( source : aligned_ptr<>, dest : Dest& )
-    //
-    //
-    template< typename Layout, typename Mapping, typename AlignedPtr, typename Arg >
-    NETSER_FORCE_INLINE auto read_inline(AlignedPtr ptr, Arg&& dest)
-    {
-        return detail::read_zip_iterator(make_zip_iterator(make_layout_iterator<Layout>(ptr), make_mapping_iterator<Mapping>(std::forward<Arg>(dest))));
-    }
-
-    template< typename Layout, typename Mapping, typename AlignedPtr, typename Arg >
-    NETSER_FORCE_INLINE auto write_inline(AlignedPtr ptr, Arg&& src)
-    {
-        return detail::write_zip_iterator(make_zip_iterator(make_layout_iterator<Layout>(ptr), make_mapping_iterator<Mapping>(std::forward<Arg>(src))));
-    }
-
-    // read< Layout, Mapping >( source : aligned_ptr<>, dest : Dest& )
-    //
-    //
-    template< typename Layout, typename Mapping, typename AlignedPtr, typename Arg >
-    void read(AlignedPtr ptr, Arg&& dest)
-    {
-        detail::read_zip_iterator( make_zip_iterator(make_layout_iterator<Layout>(ptr), make_mapping_iterator<Mapping>(std::forward<Arg>(dest))) );
-    }
-
-    template< typename Layout, typename Mapping, typename AlignedPtr, typename Arg >
-    void write(AlignedPtr ptr, Arg&& src)
-    {
-        detail::write_zip_iterator(make_zip_iterator(make_layout_iterator<Layout>(ptr), make_mapping_iterator<Mapping>(std::forward<Arg>(src))));
-    }
+    template< size_t Bits >
+    struct reserved {};
 
 }
 

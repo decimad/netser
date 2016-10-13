@@ -39,8 +39,8 @@ GTEST_TEST(integer_test, single_read32)
 
 GTEST_TEST(integer_test, single_write32)
 {
-    uint32_t src               = 0xd34db33f;
-    const uint32_t src_swapped = 0x3fb34dd3;
+    uint32_t src               = 0xd34d'b33f;
+    const uint32_t src_swapped = 0x3fb3'4dd3;
     uint32_t dest = 0;
     collect_logger log;
 
@@ -80,8 +80,8 @@ GTEST_TEST(integer_test, single_write32)
 
 GTEST_TEST( integer_test, single_write48 )
 {
-    uint64_t       src         = 0xb33fd34db33full;
-    const uint64_t src_swapped = 0x3fb34dd33fb3ull;
+    uint64_t       src         = 0xb33f'd34d'b33full;
+    const uint64_t src_swapped = 0x3fb3'4dd3'3fb3ull;
     uint64_t dest = 0;
     collect_logger log;
 
@@ -127,3 +127,5 @@ GTEST_TEST( integer_test, single_write48 )
     dest = 0;
     log.clear();
 }
+
+

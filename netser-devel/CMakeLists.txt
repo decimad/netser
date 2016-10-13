@@ -6,6 +6,9 @@ set( NETSER_HEADERS
     ../include/netser/aligned_ptr.hpp
     ../include/netser/fwd.hpp
     ../include/netser/integer.hpp
+	../include/netser/integer_read.hpp
+	../include/netser/integer_write.hpp
+	../include/netser/integer_shared.hpp
     ../include/netser/layout.hpp
     ../include/netser/layout_fields.hpp
     ../include/netser/mapping.hpp

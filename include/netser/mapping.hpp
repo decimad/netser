@@ -259,34 +259,8 @@ namespace netser {
 
         using pop = detail::mapping_pop_result< mem, mapping_list< >, dereference_stack< mem > >;
 
-/*
-        template< size_t Index, typename Ref, typename Value >
-        static void set(Ref&& ref, Value value)
-        {
-            (ref.*Ptr) = value;
-        }
-
-        template< size_t Index, typename Ref >
-        static Type& ref(Ref&& ref) {
-            return ref.*Ptr;
-        }
-*/
-/*
-        template< typename Enabled = std::enable_if_t<std::is_array<type>::value>, typename Arg, typename Val >
-        static void write(Arg&& arg, Val&& val)
-        {
-            (arg.*Ptr) = val;
-        }
-
-        template< typename Enabled = std::enable_if_t<std::is_array<type>::value>, typename Arg, typename Val >
-        static void write_indexed(Arg&& arg, size_t index, Val&& val)
-        {
-            (arg.*Ptr)[index] = val;
-        }
-*/
-
         //
-        //	dereference_stack interface
+        //  dereference_stack interface
         //
         template< typename Ref >
         static Type& dereference(Ref& ref) {
@@ -431,6 +405,7 @@ namespace netser {
 
 }
 
+// I will be so happy once C++17 allows for auto value arguments.
 #define MEMBER( Class, Member ) \
     ::netser::mem< Class, std::remove_reference_t<decltype(::netser::detail::deduce_type(&Class::Member))>, &Class::Member >
 #define MEMBER1( MemberAccess ) \

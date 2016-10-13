@@ -39,22 +39,6 @@ namespace netser {
         return detail::byte_swap_switch_struct<Predicate>::swap(val);
     }
 
-/*
-    constexpr size_t aligned_bytes(size_t Alignment, size_t Offset)
-    {
-        return Offset - (Offset % Alignment);
-    }
-
-    constexpr size_t aligned_bits(size_t Alignment, size_t Offset)
-    {
-        return Offset - (Offset % (Alignment * 8));
-    }
-
-    constexpr size_t offset_alignment(size_t Offset, size_t current = 1) {
-        return (((current-1) & Offset) == 0 && current <= 8) ? max( current, offset_alignment(Offset, current * 2) ) : 0;
-    }
-*/
-
     template< typename AtomicMemoryAccess, int Offset >
     struct placed_atomic_memory_access;
 
@@ -80,7 +64,7 @@ namespace netser {
         static type write(AlignedPtr dest, type value)
         {
             static_assert(Offset % 8 == 0, "Bad Offset!");
-            dest.template dereference<type, Offset / 8>() = value;
+            dest.template dereference<type, Offset/8>() = value;
         }
 
         template< int Offset >
@@ -88,8 +72,8 @@ namespace netser {
 
         template< int Offset, typename AlignedPtr >
         using aligned_range = bit_range<
-            AlignedPtr::align_down( Offset/8, Alignment )*8,
-            AlignedPtr::align_down( Offset/8, Alignment )*8 + int(Size*8)
+            AlignedPtr::align_down(Offset/8, Alignment)*8,
+            AlignedPtr::align_down(Offset/8, Alignment)*8 + int(Size*8)
         >;
     };
 

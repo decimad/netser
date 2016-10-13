@@ -46,12 +46,17 @@ struct limit_begin_range {
     using offset_range = limit_begin_range< Begin - Offset >;
 };
 
+
+// aligned_ptr
+// Class that encapsulates a pointer, its alignment and defect and a valid access range
+//
 template< typename Type, size_t Alignment, size_t Defect = 0, typename OffsetRange = limit_begin_range<0> >
 struct aligned_ptr {
     using value_type = Type;
     using type = Type* const;
 
-    // Alignment + Defect are actually Alignment+Defect in GCC parlance, which form a residue class
+    // Alignment+Defect are actually Alignment+Defect in GCC parlance, which form a residue class
+    // from which we can calculate the residue class and thus the alignment at any offset.
     using residue      = residue_class< Alignment, Defect >;
 
     using offset_range = OffsetRange;
@@ -116,7 +121,7 @@ public:
 
     template< int Offset >
     constexpr std::remove_const_t<type> get_offset() const {
-        static_assert( offset_range::contains(Offset, Offset+sizeof(type)), "Getting pointer to invalid memory location." );
+        static_assert(offset_range::contains(Offset, Offset), "No possible memory access at given location."); // Fixme: Is this over-restrictive?
 #ifdef __GNUC__
         // We can hint the alignment+defect, maybe GCC can put it to use
         return reinterpret_cast<type>(__builtin_assume_aligned(
@@ -136,6 +141,7 @@ public:
     template< typename T, int Offset = 0 >
     T& dereference() const
     {
+        static_assert(offset_range::contains(Offset, Offset+int(sizeof(T))), "Pointer range does not contain the dereferenced type at given Offset.");
 #ifdef NETSER_DEREFERENCE_LOGGING
         if( logger_ ) {
             logger_->log(
@@ -283,4 +289,3 @@ auto offset( aligned_ptr<Type, Alignment, Defect, OffsetRange> ptr )
 }
 
 #endif
-

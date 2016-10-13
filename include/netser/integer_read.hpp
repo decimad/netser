@@ -23,7 +23,7 @@ namespace netser {
             using placed_access = PlacedAccess;
             using placed_field  = PlacedField;
 
-            using field_range = typename placed_field::range;
+            using field_range          = typename placed_field::range;
             using access_integral_type = typename placed_access::type;
 
             using access_range = typename placed_access::range;
@@ -102,11 +102,11 @@ namespace netser {
 
         }
 
-        template< typename LayoutIterator, int Offset, typename PossibleAccessesList = platform_filtered_memory_accesses< LayoutIterator::get_max_alignment()>, typename CurrentResult = empty_access >
+        template< typename LayoutIterator, int Offset, typename PossibleAccessesList = filtered_accesses_t< typename LayoutIterator::pointer_type, Offset/8, platform_memory_accesses >, typename CurrentResult = empty_access >
         using find_best_access_t = typename impl::find_best_access< LayoutIterator, Offset, PossibleAccessesList, CurrentResult >::type;
 
 #ifdef NETSER_DEBUG_CONSOLE
-        template< typename LayoutIterator, int Offset, typename PossibleAccessesList = platform_filtered_memory_accesses<LayoutIterator::get_max_alignment()>, typename CurrentResult = empty_access >
+        template< typename LayoutIterator, int Offset, typename PossibleAccessesList = filtered_accesses_t< typename LayoutIterator::pointer_type, Offset/8, platform_memory_accesses >, typename CurrentResult = empty_access >
         void describe_find_best_access_t() {
             std::cout << "\n    Finding best access at offset " << Offset << " out of " << list_size_v< PossibleAccessesList > << " alternatives.\n";
             impl::find_best_access< LayoutIterator, Offset, PossibleAccessesList, CurrentResult >::describe();

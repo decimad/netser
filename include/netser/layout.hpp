@@ -455,8 +455,8 @@ namespace netser {
         {
             static NETSER_FORCE_INLINE auto read( ZipIterator it )
             {
-            	static_assert(ZipIterator::layout_iterator::ct_iterator::offset%8 == 0, "Must!");
-                return it.layout().get().template static_offset< ZipIterator::layout_iterator::ct_iterator::offset/8 >();
+                static_assert(ZipIterator::layout_iterator::ct_iterator::offset%8 == 0, "Must!");
+                return it.layout().get().template static_offset< int(ZipIterator::layout_iterator::ct_iterator::offset)/8 >();
             }
         };
 

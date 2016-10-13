@@ -140,7 +140,7 @@ namespace netser {
 // I will be so happy once C++17 allows for auto value arguments.
 #define ZIPPED_MEMBER( MemberAccess ) \
     ::netser::detail::zipped_member< \
-          default_zipped_t<decltype(::netser::detail::deduce_type( &MemberAccess ))> \
+          ::netser::default_zipped_t<decltype(::netser::detail::deduce_type( &MemberAccess ))> \
         , decltype(::netser::detail::deduce_class(&MemberAccess)) \
         , std::remove_reference_t<decltype(::netser::detail::deduce_type(&MemberAccess))>, &MemberAccess \
     >

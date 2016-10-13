@@ -7,6 +7,9 @@
 #define NETSER_STATIC_ARRAY_HPP__
 
 #include <netser/layout.hpp>
+#include <netser/fill_random.hpp>
+#include <netser/read.hpp>
+#include <netser/write.hpp>
 
 namespace netser {
 

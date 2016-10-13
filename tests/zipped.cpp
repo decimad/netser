@@ -133,18 +133,18 @@ GTEST_TEST(zipped, zipped_ptp_header_roundtrip)
     EXPECT_EQ( header_src, header_dest );
     
     fill_random( header_src );
-    make_aligned_ptr<4>(buffer) << header_src;
-    make_aligned_ptr<4>(buffer) >> header_dest;
+    make_aligned_ptr<4,0,34>(buffer) << header_src;
+    make_aligned_ptr<4,0,34>(buffer) >> header_dest;
     EXPECT_EQ(header_src, header_dest);
 
     fill_random( header_src );
-    make_aligned_ptr<4,1>( buffer ) << header_src;
-    make_aligned_ptr<4,1>( buffer ) >> header_dest;
+    make_aligned_ptr<4,1,34>( buffer ) << header_src;
+    make_aligned_ptr<4,1,34>( buffer ) >> header_dest;
     EXPECT_EQ( header_src, header_dest );
 
     fill_random( header_src );
-    make_aligned_ptr<4, 2>( buffer ) << header_src;
-    make_aligned_ptr<4, 2>( buffer ) >> header_dest;
+    make_aligned_ptr<4,2,34>( buffer ) << header_src;
+    make_aligned_ptr<4,2,34>( buffer ) >> header_dest;
     EXPECT_EQ( header_src, header_dest );
 
     fill_random( header_src );

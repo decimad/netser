@@ -39,6 +39,7 @@ template< int Begin >
 struct lower_bounded {
     static constexpr bool contains( int begin, int end )
     {
+        (void) end;
         return begin >= Begin;
     }
 
@@ -201,7 +202,7 @@ public:
     }
 
     // stride_offset
-    template< size_t StrideBytes, size_t RelativeOffsetBytes >
+    template< size_t StrideBytes, int RelativeOffsetBytes >
     auto stride_offset( size_t index ) {
         return static_offset< RelativeOffsetBytes >().template stride< StrideBytes >( index );
     }
@@ -227,11 +228,12 @@ auto make_aligned_ptr( Arg* arg
     , dereference_logger* logger = nullptr
 #endif
 )
-#ifndef _MSC_VER    // Hide IntelliSense-Error
--> typename aligned_ptr< Arg, Alignment, Defect, MinOffset >::template static_offset_t<Offset>
-#endif
 {
+#ifndef NETSER_DEREFERENCE_LOGGING
+    return aligned_ptr< Arg, Alignment, Defect, OffsetRange >( arg ).template static_offset<Offset>();
+#else
     return aligned_ptr< Arg, Alignment, Defect, OffsetRange >( arg, logger ).template static_offset<Offset>();
+#endif
 }
 
 template< int Offset, size_t Alignment, size_t Defect, typename OffsetRange, typename Type >

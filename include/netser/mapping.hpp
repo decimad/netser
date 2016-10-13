@@ -197,6 +197,9 @@ namespace netser {
 
     };
 
+
+
+
     template< typename Class, typename Type, Type Class::*Ptr, typename MappingsList >
     struct mapped_member
     {
@@ -220,16 +223,6 @@ namespace netser {
         {
             return arg.*Ptr;
         }
-
-        template< size_t Index, typename Ref, typename Value >
-        static void set(Ref&& ref, Value value) {
-            base::template set<Index>(ref.*Ptr, value);
-        }
-
-        template< size_t Index, typename Ref >
-        static auto get(Ref&& ref) {
-            return base::template get<Index>(ref.*Ptr);
-        }
     };
 
     // identity_member
@@ -249,12 +242,40 @@ namespace netser {
 
     using identity = identity_member;
 
-    template< typename Class, typename Type, Type Class::*Ptr >
+    template< typename T >
+    struct enum_wrapper {
+        enum_wrapper( T& anEnum )
+            : enum_( anEnum )
+        {}
+
+        static_assert(std::is_enum<T>::value, "No enum type.");
+
+        using underlying_type = std::underlying_type_t<T>;
+
+        template< typename O >
+        enum_wrapper& operator=( O&& val )
+        {
+            enum_ = static_cast<T>( val );
+            return *this;
+        }
+
+        operator underlying_type() const
+        {
+            return static_cast< underlying_type >( enum_ );
+        }
+
+        T& enum_;
+    };
+
+    //
+    // I'm not conviced yet it is an acceptable hack to return an enum wrapper, but it is a
+    // convenient solution to support enums for now.
+    template< typename Class, typename Type, Type Class::*Ptr, bool IsEnum = std::is_enum<Type>::value >
     struct mem {
         static constexpr size_t size = 1;
         using value_type = Type;
 
-        static constexpr Type Class::*pointer = Ptr;
+        static constexpr Type       Class::*pointer       = Ptr;
         static constexpr const Type Class::*const_pointer = Ptr;
 
         using pop = detail::mapping_pop_result< mem, mapping_list< >, dereference_stack< mem > >;
@@ -270,6 +291,31 @@ namespace netser {
         template< typename Ref >
         static const Type& dereference(const Ref& ref) {
             return ref.*const_pointer;
+        }
+    };
+
+    template< typename Class, typename Type, Type Class::*Ptr >
+    struct mem< Class, Type, Ptr, true >
+    {
+        static constexpr size_t size = 1;
+        using value_type = Type;
+
+        static constexpr Type       Class::*pointer = Ptr;
+        static constexpr const Type Class::*const_pointer = Ptr;
+
+        using pop = detail::mapping_pop_result< mem, mapping_list< >, dereference_stack< mem > >;
+
+        //
+        //  dereference_stack interface
+        //
+        template< typename Ref >
+        static enum_wrapper<Type> dereference( Ref& ref ) {
+            return { ref.*pointer };
+        }
+
+        template< typename Ref >
+        static enum_wrapper<const Type> dereference( const Ref& ref ) {
+            return { ref.*const_pointer };
         }
     };
 

@@ -15,6 +15,11 @@ constexpr size_t gcd( size_t a, size_t b )
     return (b == 0) ? a : gcd(b, a % b);
 }
 
+constexpr size_t unsigned_mod( int val, size_t divisor )
+{
+    return (val < 0) ? (divisor - (val % divisor)) : val % divisor;
+}
+
 template< size_t Divisor, size_t Remainder >
 struct residue_class {
 
@@ -29,7 +34,7 @@ struct residue_class {
     // Returns the remainder after offsetting this class by "offset".
     static constexpr size_t offset_remainder( int offset )
     {
-        return (Remainder % Divisor + offset % Divisor) % Divisor;
+        return (Remainder % Divisor + unsigned_mod(offset, Divisor)) % Divisor;
     }
 
     // Returns the alignment after offsetting this class by "offset".

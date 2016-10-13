@@ -53,10 +53,12 @@ namespace netser {
             return std::numeric_limits<stage_type>::max() & bit_mask<stage_type>( Bits - (Signed ? 1 : 0) );
         }
 
+    private:
         // defined in integer_read.hpp
         template< typename LayoutIterator >
         static constexpr NETSER_FORCE_INLINE integral_type read( LayoutIterator it );
 
+    public:
         // defined in integer_read.hpp
         template< typename ZipIterator >
         static constexpr NETSER_FORCE_INLINE auto read_span( ZipIterator it );

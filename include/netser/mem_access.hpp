@@ -57,7 +57,7 @@ namespace netser {
         static type read(AlignedPtr src)
         {
             static_assert(Offset % 8 == 0, "Bad Offset!");
-            return src.template dereference<type, Offset/8>();
+            return src.template dereference<const type, Offset/8>();
         }
 
         template< int Offset, typename AlignedPtr >
@@ -125,15 +125,15 @@ namespace netser {
         template< typename AlignedPtr >
         static typename atomic_access::type read(AlignedPtr src)
         {
-            static_assert(AlignedPtr::get_access_alignment(byte_offset) % atomic_access::alignment == 0, "Bad Offset!");
-            return src.template dereference<atomic_access::type, byte_offset>();
+            static_assert(AlignedPtr::get_access_alignment(byte_offset) % atomic_access::alignment == 0, "Offset does not meet alignment requirements!");
+            return src.template dereference<const typename atomic_access::type, byte_offset>();
         }
 
         template< typename AlignedPtr >
         static void write(AlignedPtr dest, typename atomic_access::type value)
         {
             static_assert(AlignedPtr::get_access_alignment(byte_offset) % atomic_access::alignment == 0, "Offset does not meet alignment requirements!");
-            dest.template dereference<atomic_access::type, byte_offset>() = value;
+            dest.template dereference<typename atomic_access::type, byte_offset>() = value;
         }
     };
 

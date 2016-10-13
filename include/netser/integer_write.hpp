@@ -34,7 +34,7 @@ namespace netser {
 
             template< typename T >
             struct condition {
-                static constexpr bool value = condition_inner< T::field >::value;
+                static constexpr bool value = condition_inner< typename T::field >::value;
             };
         };
 
@@ -299,7 +299,7 @@ namespace netser {
 
                 using access = typename discover_access<
                     layout_iterator_ct,
-                    filtered_accesses_nomove_t< ptr_type, layout_iterator::get_offset() + FieldWritten/8, platform_memory_accesses >,
+                    filtered_accesses_nomove_t< ptr_type, (layout_iterator::get_offset() + FieldWritten)/8, platform_memory_accesses >,
                     span_size,
                     FieldWritten
                 >::type;

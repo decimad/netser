@@ -6,6 +6,7 @@
 #ifndef NETSER_ZIP_ITERATOR_HPP__
 #define NETSER_ZIP_ITERATOR_HPP__
 
+#include <utility>
 
 namespace netser {
 

@@ -54,7 +54,7 @@ GTEST_TEST( integer_test, single_read16_defect_range )
     using uint_mapping = mapping_list< identity >;
 
     // Single read, aligned
-    read<uint_layout, uint_mapping>(make_aligned_ptr<2, 0, 0, netser::two_side_limit_range<0, 3>>(&src[1], &log), dest);
+    read<uint_layout, uint_mapping>(make_aligned_ptr<2, 0, 0, netser::bounded<0, 3>>(&src[1], &log), dest);
     EXPECT_EQ(dest, src_swapped);
     EXPECT_EQ(log.size(), 1);
     if( log.size() == 1 ) {
@@ -63,7 +63,7 @@ GTEST_TEST( integer_test, single_read16_defect_range )
     log.clear();
 
     // Single read, unaligned, no backspace, to tailspace
-    read<uint_layout, uint_mapping>(make_aligned_ptr<4, 1, 0, netser::two_side_limit_range<0, 3>>(&src[1], &log), dest);
+    read<uint_layout, uint_mapping>(make_aligned_ptr<4, 1, 0, netser::bounded<0, 3>>(&src[1], &log), dest);
     EXPECT_EQ(dest, src_swapped);
     EXPECT_EQ(log.size(), 2);
     if( log.size() == 2 ) {
@@ -73,7 +73,7 @@ GTEST_TEST( integer_test, single_read16_defect_range )
     log.clear();
 
     // Single read, unaligned, backspace, no tailspace
-    read<uint_layout, uint_mapping>(make_aligned_ptr<4, 1, 0, netser::two_side_limit_range<-2, 5>>(&src[1], &log), dest);
+    read<uint_layout, uint_mapping>(make_aligned_ptr<4, 1, 0, netser::bounded<-2, 5>>(&src[1], &log), dest);
     EXPECT_EQ(dest, src_swapped);
     EXPECT_EQ(log.size(), 1);
     if( log.size() == 2 ) {

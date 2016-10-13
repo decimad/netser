@@ -5,6 +5,8 @@
 
 using namespace netser;
 
+// Using a PTP header packet as testcase.
+
 using uint16 = unsigned short;
 using uint8  = unsigned char;
 using int8   = signed char;
@@ -23,6 +25,8 @@ using clock_identity_zipped = netser::zipped<
     net_uint<8>[8], MEMBER1( ClockIdentity::identity )
 >;
 
+clock_identity_zipped default_zipped( ClockIdentity );
+
 struct PortIdentity {
     ClockIdentity clock;
     uint16 port;
@@ -36,9 +40,11 @@ struct PortIdentity {
 
 // PortIdentity
 using port_identity_zipped = netser::zipped<
-    ZIPPED_MEMBER( clock_identity_zipped, PortIdentity::clock )
+    ZIPPED_MEMBER( PortIdentity::clock )
     , net_uint<16>, MEMBER1( PortIdentity::port )
 >;
+
+port_identity_zipped default_zipped( PortIdentity );
 
 struct Header {
     enum class Field0Flags {
@@ -101,7 +107,7 @@ using header_zipped = netser::zipped<
     , net_uint<8>,  MEMBER1( Header::flag_field1 )
     , net_uint<64>, MEMBER1( Header::correction_field )
     , reserved<32>
-    , ZIPPED_MEMBER( port_identity_zipped, Header::source_port_identity )
+    , ZIPPED_MEMBER( Header::source_port_identity )
     , net_uint<16>, MEMBER1( Header::sequence_id )
     , net_uint<8>,  MEMBER1( Header::control_field )
     , net_int<8>,   MEMBER1( Header::log_message_interval )
@@ -109,7 +115,7 @@ using header_zipped = netser::zipped<
 
 header_zipped default_zipped( Header );
 
-// Test PTP header serialization.
+// Test PTP header roundtrips.
 GTEST_TEST(zipped, zipped_ptp_header_roundtrip)
 {
     char buffer[128];
@@ -117,10 +123,33 @@ GTEST_TEST(zipped, zipped_ptp_header_roundtrip)
     Header header_dest;
 
     fill_random( header_src );
+    make_aligned_ptr<1>( buffer ) << header_src;
+    make_aligned_ptr<1>( buffer ) >> header_dest;
+    EXPECT_EQ( header_src, header_dest );
 
+    fill_random( header_src );
+    make_aligned_ptr<2>( buffer ) << header_src;
+    make_aligned_ptr<2>( buffer ) >> header_dest;
+    EXPECT_EQ( header_src, header_dest );
+    
+    fill_random( header_src );
     make_aligned_ptr<4>(buffer) << header_src;
     make_aligned_ptr<4>(buffer) >> header_dest;
-
     EXPECT_EQ(header_src, header_dest);
+
+    fill_random( header_src );
+    make_aligned_ptr<4,1>( buffer ) << header_src;
+    make_aligned_ptr<4,1>( buffer ) >> header_dest;
+    EXPECT_EQ( header_src, header_dest );
+
+    fill_random( header_src );
+    make_aligned_ptr<4, 2>( buffer ) << header_src;
+    make_aligned_ptr<4, 2>( buffer ) >> header_dest;
+    EXPECT_EQ( header_src, header_dest );
+
+    fill_random( header_src );
+    make_aligned_ptr<4, 3>( buffer ) << header_src;
+    make_aligned_ptr<4, 3>( buffer ) >> header_dest;
+    EXPECT_EQ( header_src, header_dest );
 }
 

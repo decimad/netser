@@ -117,6 +117,9 @@ namespace netser {
         return write_zipped_inline<decltype(default_zipped(std::declval<Arg>()))>(ptr, std::forward<Arg>(arg));
     }
 
+    template< typename T >
+    using default_zipped_t = decltype(default_zipped( std::declval<T>()));  // If this fails to compile you forgot to provide an overload of default_zipped(T)
+
     // fill_mapping_random
     // helper function for default_zipped mappings
     //
@@ -135,7 +138,11 @@ namespace netser {
 }
 
 // I will be so happy once C++17 allows for auto value arguments.
-#define ZIPPED_MEMBER( Zipped, MemberAccess ) \
-    ::netser::detail::zipped_member< Zipped, decltype(::netser::detail::deduce_class(&MemberAccess)), std::remove_reference_t<decltype(::netser::detail::deduce_type(&MemberAccess))>, &MemberAccess >
+#define ZIPPED_MEMBER( MemberAccess ) \
+    ::netser::detail::zipped_member< \
+          default_zipped_t<decltype(::netser::detail::deduce_type( &MemberAccess ))> \
+        , decltype(::netser::detail::deduce_class(&MemberAccess)) \
+        , std::remove_reference_t<decltype(::netser::detail::deduce_type(&MemberAccess))>, &MemberAccess \
+    >
 
 #endif

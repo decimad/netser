@@ -25,32 +25,32 @@ public:
 #endif
 
 template< int Begin, int End >
-struct two_side_limit_range {
+struct bounded {
     static constexpr bool contains( int begin, int end )
     {
         return begin >= Begin && end < End;
     }
 
     template< int Offset >
-    using offset_range = two_side_limit_range< Begin - Offset, End - Offset >;
+    using offset_range = bounded< Begin - Offset, End - Offset >;
 };
 
 template< int Begin >
-struct limit_begin_range {
+struct lower_bounded {
     static constexpr bool contains( int begin, int end )
     {
         return begin >= Begin;
     }
 
     template< int Offset >
-    using offset_range = limit_begin_range< Begin - Offset >;
+    using offset_range = lower_bounded< Begin - Offset >;
 };
 
 
 // aligned_ptr
 // Class that encapsulates a pointer, its alignment and defect and a valid access range
 //
-template< typename Type, size_t Alignment, size_t Defect = 0, typename OffsetRange = limit_begin_range<0> >
+template< typename Type, size_t Alignment, size_t Defect = 0, typename OffsetRange = lower_bounded<0> >
 struct aligned_ptr {
     using value_type = Type;
     using type = Type* const;
@@ -221,7 +221,7 @@ public:
 #endif
 };
 
-template< size_t Alignment, size_t Defect = 0, int Offset = 0, typename OffsetRange = limit_begin_range<0>, typename Arg >
+template< size_t Alignment, size_t Defect = 0, int Offset = 0, typename OffsetRange = lower_bounded<0>, typename Arg >
 auto make_aligned_ptr( Arg* arg
 #ifdef NETSER_DEREFERENCE_LOGGING
     , dereference_logger* logger = nullptr

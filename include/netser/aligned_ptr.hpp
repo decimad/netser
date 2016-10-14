@@ -52,7 +52,8 @@ struct lower_bounded {
 // Class that encapsulates a pointer, its alignment and defect and a valid access range
 //
 template< typename Type, size_t Alignment, size_t Defect = 0, typename OffsetRange = lower_bounded<0> >
-struct aligned_ptr {
+class aligned_ptr {
+public:
     using value_type = Type;
     using type = Type* const;
 

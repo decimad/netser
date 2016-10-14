@@ -1,5 +1,5 @@
 # netser - Network packet serialization
-This lib was motivated when I wrote platform specific networt-packet serialization code. I'm no person that takes pride of having shifts, masking and hexadecimal constants everywhere. Added complication was that my microcontroller platform would not allow unaligned reads and writes. This lib aims to solve this, by generating only aligned reads and writes which are described in a platform-dependent list.
+This lib was motivated when I wrote platform specific networt-packet serialization code. I'm not a person who takes pride in having shifts, masking and hexadecimal constants everywhere. Added complication was that my microcontroller platform would not allow unaligned reads and writes. This lib aims to solve this, by generating only aligned reads and writes which are described in a platform-dependent list.
 
 The main criteria for this lib are
 - No bitshuffling code in protocol level sources

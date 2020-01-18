@@ -10,6 +10,8 @@
 
 namespace netser {
 
+    using std::size_t;
+
     struct error_type {};
 
     //

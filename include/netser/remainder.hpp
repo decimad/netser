@@ -6,10 +6,11 @@
 #ifndef NETSER_REMAINDER_HPP__
 #define NETSER_REMAINDER_HPP__
 
-//#include <limits>
+#include <cstddef>
 
 namespace netser {
 
+using std::size_t;
 constexpr size_t gcd( size_t a, size_t b )
 {
     return (b == 0) ? a : gcd(b, a % b);

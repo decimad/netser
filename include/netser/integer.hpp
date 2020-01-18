@@ -6,6 +6,8 @@
 #ifndef NETSER_INTEGER_HPP__
 #define NETSER_INTEGER_HPP__
 
+#include <random>
+#include <limits>
 #ifdef NETSER_DEBUG_CONSOLE
 #include <iostream>
 #endif

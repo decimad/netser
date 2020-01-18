@@ -7,6 +7,9 @@
 #define NETSER_INTEGER_READ_HPP__
 
 #include <netser/mem_access.hpp>
+#include <netser/integer_shared.hpp>
+#include <netser/integer.hpp>
+#include <netser/aligned_ptr.hpp>
 
 namespace netser {
 

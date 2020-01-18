@@ -6,9 +6,11 @@
 #ifndef NETSER_UTILITY_HPP__
 #define NETSER_UTILITY_HPP__
 
+#include <utility>
 #include <netser/type_list.hpp>
 
 namespace netser {
+    using std::size_t;
 
     //
     // min/max

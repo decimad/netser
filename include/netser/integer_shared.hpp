@@ -11,6 +11,7 @@
 
 namespace netser {
 
+    using std::size_t;
     struct error_type;
 
     template< bool Signed, size_t Bits, typename Endianess >

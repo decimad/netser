@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <netser/remainder.hpp>
 #include <netser/type_list.hpp>
+#include <netser/utility.hpp>
 
 #ifdef NETSER_DEBUG_CONSOLE
 #include <iostream>
@@ -16,6 +17,9 @@
 #endif
 
 namespace netser {
+
+using std::size_t;
+
 
 #ifdef NETSER_DEREFERENCE_LOGGING
 class dereference_logger {

@@ -6,8 +6,8 @@
 #ifndef NETSER_LAYOUT_ITERATOR_HPP__
 #define NETSER_LAYOUT_ITERATOR_HPP__
 
-namespace netser {
-
+namespace netser
+{
 
 }
 

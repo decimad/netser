@@ -6,20 +6,24 @@
 #ifndef NETSER_INTEGER_HPP__
 #define NETSER_INTEGER_HPP__
 
-#include <random>
 #include <limits>
+#include <random>
+
 #ifdef NETSER_DEBUG_CONSOLE
 #include <iostream>
 #endif
+#include <netser/integer_shared.hpp>
 #include <netser/layout.hpp>
 #include <netser/mem_access.hpp>
-#include <netser/integer_shared.hpp>
 
-namespace netser {
+
+namespace netser
+{
 
     // Integer default mapping (If sub-byte, it must not span byte borders, if multi-byte, it must be byte-aligned)
-    template< bool Signed, size_t Bits, typename ByteOrder >
-    struct int_ : public detail::simple_field_layout_mixin< int_<Signed, Bits, ByteOrder> > {
+    template <bool Signed, size_t Bits, typename ByteOrder>
+    struct int_ : public detail::simple_field_layout_mixin<int_<Signed, Bits, ByteOrder>>
+    {
 
         //
         // Basic Layout interface
@@ -29,8 +33,9 @@ namespace netser {
 
         using endianess = ByteOrder;
 
-        template< size_t Index, size_t BitOffset >
-        struct get_field {
+        template <size_t Index, size_t BitOffset>
+        struct get_field
+        {
             static_assert(Index == 0, "Error!");
             static constexpr size_t offset = BitOffset;
             using type = int_;
@@ -39,8 +44,8 @@ namespace netser {
         //
         // Basic leaf interface
         //
-        using stage_type    = detail::auto_stage_type_t< Bits >;
-        using integral_type = std::conditional_t< Signed, std::make_signed_t< stage_type >, std::make_unsigned_t< stage_type > >;
+        using stage_type = detail::auto_stage_type_t<Bits>;
+        using integral_type = std::conditional_t<Signed, std::make_signed_t<stage_type>, std::make_unsigned_t<stage_type>>;
 
         // min, max utility
         //
@@ -52,53 +57,54 @@ namespace netser {
 
         static constexpr stage_type max()
         {
-            return std::numeric_limits<stage_type>::max() & bit_mask<stage_type>( Bits - (Signed ? 1 : 0) );
+            return std::numeric_limits<stage_type>::max() & bit_mask<stage_type>(Bits - (Signed ? 1 : 0));
         }
 
-    private:
+      private:
         // defined in integer_read.hpp
-        template< typename LayoutIterator >
-        static constexpr NETSER_FORCE_INLINE integral_type read( LayoutIterator it );
+        template <typename LayoutIterator>
+        static constexpr NETSER_FORCE_INLINE integral_type read(LayoutIterator it);
 
-    public:
+      public:
         // defined in integer_read.hpp
-        template< typename ZipIterator >
-        static constexpr NETSER_FORCE_INLINE auto read_span( ZipIterator it );
+        template <typename ZipIterator>
+        static constexpr NETSER_FORCE_INLINE auto read_span(ZipIterator it);
 
         // defined int integer_write.hpp
-        template< typename ZipIterator >
-        static constexpr NETSER_FORCE_INLINE auto write_span( ZipIterator it );
+        template <typename ZipIterator>
+        static constexpr NETSER_FORCE_INLINE auto write_span(ZipIterator it);
 
-        // 
-        template< typename MappingIterator, typename Generator >
-        static NETSER_FORCE_INLINE void fill_random( MappingIterator it, Generator&& generator )
+        //
+        template <typename MappingIterator, typename Generator>
+        static NETSER_FORCE_INLINE void fill_random(MappingIterator it, Generator &&generator)
         {
-            std::uniform_int_distribution< std::conditional_t< std::is_same<stage_type, unsigned char>::value, unsigned short, stage_type> > dis( min(), max() );
+            std::uniform_int_distribution<std::conditional_t<std::is_same<stage_type, unsigned char>::value, unsigned short, stage_type>>
+                dis(min(), max());
             it.dereference() = static_cast<stage_type>(dis(generator));
         }
 
-        template< typename DestType, typename T >
-        static constexpr DestType extract(T val) {
+        template <typename DestType, typename T>
+        static constexpr DestType extract(T val)
+        {
             return static_cast<DestType>(val) & bit_mask<DestType>(size);
         }
-
     };
 
-    template< size_t Size >
-    using net_uint = int_< false, Size, be >;
+    template <size_t Size>
+    using net_uint = int_<false, Size, be>;
 
-    template< size_t Size >
-    using net_int = int_< true, Size, be >;
+    template <size_t Size>
+    using net_int = int_<true, Size, be>;
 
-    using net_int8   = net_int<8>;
-    using net_int16  = net_int<16>;
-    using net_int32  = net_int<32>;
+    using net_int8 = net_int<8>;
+    using net_int16 = net_int<16>;
+    using net_int32 = net_int<32>;
 
-    using net_uint8  = net_uint<8>;
+    using net_uint8 = net_uint<8>;
     using net_uint16 = net_uint<16>;
     using net_uint32 = net_uint<32>;
 
-}
+} // namespace netser
 
 #include <netser/integer_read.hpp>
 #include <netser/integer_write.hpp>

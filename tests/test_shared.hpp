@@ -5,37 +5,40 @@
 #include <vector>
 
 #define NETSER_DEREFERENCE_LOGGING
-#include <netser/netser.hpp>
 #include <netser/aligned_ptr.hpp>
+#include <netser/netser.hpp>
+
 
 class print_logger : public netser::dereference_logger
 {
-public:
-    void log( uintptr_t memory_location, int offset, std::string type_name, size_t type_size, size_t type_alignment ) override
+  public:
+    void log(uintptr_t memory_location, int offset, std::string type_name, size_t type_size, size_t type_alignment) override
     {
-        std::cout << "Access at " << std::hex << memory_location << " (+" << offset << "): " << type_name << " (size: " << type_size << ", align: " << type_alignment << ")\n";
+        std::cout << "Access at " << std::hex << memory_location << " (+" << offset << "): " << type_name << " (size: " << type_size
+                  << ", align: " << type_alignment << ")\n";
     }
 };
 
 class collect_logger : public netser::dereference_logger
 {
-public:
-    struct item {
+  public:
+    struct item
+    {
         int offset;
         size_t size;
     };
 
-    void log( uintptr_t memory_location, int offset, std::string type_name, size_t type_size, size_t type_alignment ) override
+    void log(uintptr_t memory_location, int offset, std::string type_name, size_t type_size, size_t type_alignment) override
     {
-        items_.push_back({ offset, type_size });
+        items_.push_back({offset, type_size});
     }
 
-    item& operator[]( size_t index )
+    item &operator[](size_t index)
     {
         return items_[index];
     }
 
-    const item& operator[]( size_t index ) const
+    const item &operator[](size_t index) const
     {
         return items_[index];
     }
@@ -50,7 +53,7 @@ public:
         items_.clear();
     }
 
-    std::vector< item > items_;
+    std::vector<item> items_;
 };
 
 #endif

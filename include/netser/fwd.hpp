@@ -9,20 +9,21 @@
 #include <cstddef>
 using std::size_t;
 
-namespace netser {
+namespace netser
+{
 
-    template< typename Type, size_t Size, size_t Alignment, typename Endianess >
+    template <typename Type, size_t Size, size_t Alignment, typename Endianess>
     struct atomic_memory_access;
 
-    template< typename... >
+    template <typename...>
     struct memory_access_list;
 
     struct le;
     struct be;
 
     using little_endian = le;
-    using big_endian    = be;
+    using big_endian = be;
 
-}
+} // namespace netser
 
 #endif

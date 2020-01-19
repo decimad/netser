@@ -15,26 +15,22 @@
 #include <netser/platform_generic.hpp>
 #include <netser/type_list.hpp>
 
-namespace netser {
-
+namespace netser
+{
 
 #ifdef _MSC_VER
-	using uint64 = unsigned __int64;
-	using int64  = __int64;
+    using uint64 = unsigned __int64;
+    using int64 = __int64;
 #else
-	using uint64 = unsigned long long;
-	using int64 = long long;
+    using uint64 = unsigned long long;
+    using int64 = long long;
 #endif
 
+    template <typename T>
+    using byte_swap_wrapper = platform_generic_wrapper<T>;
 
-	template< typename T >
-	using byte_swap_wrapper = platform_generic_wrapper<T>;
+    using platform_memory_accesses
+        = type_list<atomic_memory_access<unsigned char, 1, 1, little_endian>, atomic_memory_access<unsigned short, 2, 2, little_endian>,
+                    atomic_memory_access<unsigned int, 4, 4, little_endian>, atomic_memory_access<uint64, 8, 8, little_endian>>;
 
-	using platform_memory_accesses = type_list<
-		atomic_memory_access< unsigned char,  1, 1, little_endian >,
-		atomic_memory_access< unsigned short, 2, 2, little_endian >,
-		atomic_memory_access< unsigned int,   4, 4, little_endian >,
-		atomic_memory_access< uint64,         8, 8, little_endian >
-	>;
-
-}
+} // namespace netser

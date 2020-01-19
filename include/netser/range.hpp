@@ -8,10 +8,12 @@
 
 #include <netser/type_list.hpp>
 
-namespace netser {
+namespace netser
+{
 
     // compile-time
-    namespace ct {
+    namespace ct
+    {
 
         // Range concept:
         // must contain types
@@ -22,7 +24,6 @@ namespace netser {
         //    advance - Range Concept
         //    constexpr bool empty() return true iff the range is empty
         //
-
 
         // struct some_range {
         //      using begin = SomeIterator;
@@ -35,25 +36,29 @@ namespace netser {
         // iterator_range
         //
         // Begin and End must satisfy the Iterator Concept and belong to the same sequence
-        template< typename Begin, typename End >
-        struct iterator_range {
+        template <typename Begin, typename End>
+        struct iterator_range
+        {
             using begin = Begin;
-            using end   = End;
+            using end = End;
 
-            using advance = iterator_range< typename Begin::advance, end >;
-            using dereference = deref_t< Begin >;
+            using advance = iterator_range<typename Begin::advance, end>;
+            using dereference = deref_t<Begin>;
 
-            static constexpr bool empty() {
+            static constexpr bool empty()
+            {
                 return false;
             }
         };
 
-        template< typename Iterator >
-        struct iterator_range< Iterator, Iterator > {
+        template <typename Iterator>
+        struct iterator_range<Iterator, Iterator>
+        {
             using begin = Iterator;
-            using end   = Iterator;
+            using end = Iterator;
 
-            static constexpr bool empty() {
+            static constexpr bool empty()
+            {
                 return true;
             }
         };
@@ -62,36 +67,38 @@ namespace netser {
         // Note: since we cannot expect a range to have type-list style variadic arguments
         //       we have to work with the iterators and range concept only.
         //
-        namespace detail {
+        namespace detail
+        {
 
-            template< typename... Ranges >
+            template <typename... Ranges>
             struct concat_range_iterator
             {
             };
 
-            template< typename Range0, typename... Ranges >
-            struct concat_range_iterator< Range0, Ranges... >
+            template <typename Range0, typename... Ranges>
+            struct concat_range_iterator<Range0, Ranges...>
             {
-                using dereference = deref_t< Range0 >;
+                using dereference = deref_t<Range0>;
 
-                using advance = std::conditional_t< !next_t< Range0 >::empty(),
-                    concat_range_iterator< next_t< Range0 >, Ranges... >,
-                    concat_range_iterator< Ranges... >
-                >;
+                using advance = std::conditional_t<!next_t<Range0>::empty(), concat_range_iterator<next_t<Range0>, Ranges...>,
+                                                   concat_range_iterator<Ranges...>>;
             };
 
-            template< typename T >
-            struct is_empty_range {
+            template <typename T>
+            struct is_empty_range
+            {
                 static constexpr bool value = T::empty();
             };
 
-            template< typename... Ranges >
+            template <typename... Ranges>
             struct concat_range
             {
-                struct empty_type {};
+                struct empty_type
+                {
+                };
 
                 using begin = empty_type;
-                using end   = empty_type;
+                using end = empty_type;
 
                 static constexpr bool empty()
                 {
@@ -99,18 +106,16 @@ namespace netser {
                 }
             };
 
-            template< typename Range0, typename... Ranges >
-            struct concat_range< Range0, Ranges... >
+            template <typename Range0, typename... Ranges>
+            struct concat_range<Range0, Ranges...>
             {
-                using begin = concat_range_iterator< Range0, Ranges... >;
-                using end   = concat_range_iterator< >;
+                using begin = concat_range_iterator<Range0, Ranges...>;
+                using end = concat_range_iterator<>;
 
-                using dereference = deref_t< Range0 >;
+                using dereference = deref_t<Range0>;
 
-                using advance = std::conditional_t< !next_t<Range0>::empty(),
-                    concat_range< next_t< Range0 >, Ranges... >,
-                    concat_range< Ranges... >
-                >;
+                using advance
+                    = std::conditional_t<!next_t<Range0>::empty(), concat_range<next_t<Range0>, Ranges...>, concat_range<Ranges...>>;
 
                 static constexpr bool empty()
                 {
@@ -119,141 +124,143 @@ namespace netser {
             };
 
             // Remove all empty ranges before "returning" the concat range.
-            template< typename... Ranges >
-            using make_concat_range = erase_if_t< concat_range< Ranges... > , is_empty_range >;
-        }
+            template <typename... Ranges>
+            using make_concat_range = erase_if_t<concat_range<Ranges...>, is_empty_range>;
+        } // namespace detail
 
-        template< typename... Ranges >
-        using concat_range = detail::make_concat_range< Ranges... >;
-
+        template <typename... Ranges>
+        using concat_range = detail::make_concat_range<Ranges...>;
 
         //
         // Make a range from any type compatible with the TypeList concept
         // (no need to use for class type_list, it defines those already)
         //
 
-        namespace detail {
+        namespace detail
+        {
 
-            template< typename T >
+            template <typename T>
             struct make_type_list_range;
 
-            template< template< typename... > class TypeList, typename... Types >
-            struct make_type_list_range< TypeList< Types... > >
+            template <template <typename...> class TypeList, typename... Types>
+            struct make_type_list_range<TypeList<Types...>>
             {
-                using type = iterator_range< type_list_iterator< Types... >, type_list_iterator<> >;
+                using type = iterator_range<type_list_iterator<Types...>, type_list_iterator<>>;
             };
 
-        }
+        } // namespace detail
 
-        template< typename TypeList >
-        using type_list_range_t = typename detail::make_type_list_range< TypeList >::type;
+        template <typename TypeList>
+        using type_list_range_t = typename detail::make_type_list_range<TypeList>::type;
 
         // for_each
         //
         //
-        template< template< typename > class Functor, typename Begin >
-        void for_each( Begin, Begin )
-        {}
-
-        template< template< typename > class Functor, typename Begin, typename End >
-        void for_each( Begin, End )
+        template <template <typename> class Functor, typename Begin>
+        void for_each(Begin, Begin)
         {
-            Functor<deref_t<Begin>>()();
-            for_each< Functor >( next_t<Begin>(), End() );
         }
 
-        template< template< typename > class Functor, typename Range >
-        void for_each( Range )
+        template <template <typename> class Functor, typename Begin, typename End>
+        void for_each(Begin, End)
         {
-            for_each< Functor >( typename Range::begin(), typename Range::end() );
+            Functor<deref_t<Begin>>()();
+            for_each<Functor>(next_t<Begin>(), End());
+        }
+
+        template <template <typename> class Functor, typename Range>
+        void for_each(Range)
+        {
+            for_each<Functor>(typename Range::begin(), typename Range::end());
         }
 
         // Range iterator
         //
         // Fixme: Range::empty() doesn't work on MSVC, cannot see an error though.
-        template< typename Range, bool IsEmpty = Range::empty() >
+        template <typename Range, bool IsEmpty = Range::empty()>
         struct range_iterator
         {
             using dereference = deref_t<Range>;
-            using advance     = typename next_t<Range>::begin;
+            using advance = typename next_t<Range>::begin;
         };
 
-        template< typename Range >
-        struct range_iterator< Range, true >
+        template <typename Range>
+        struct range_iterator<Range, true>
         {
         };
 
-        struct empty_range {
+        struct empty_range
+        {
             static constexpr bool empty()
             {
                 return true;
             }
         };
 
-        struct nonempty_range {
+        struct nonempty_range
+        {
             static constexpr bool empty()
             {
                 return false;
             }
         };
 
-
         // Integral range
-        template< typename T, T Begin, T End >
-        struct integral_range : public nonempty_range {
+        template <typename T, T Begin, T End>
+        struct integral_range : public nonempty_range
+        {
             using dereference = std::integral_constant<T, Begin>;
-            using advance = integral_range< T, Begin + 1, End >;
+            using advance = integral_range<T, Begin + 1, End>;
 
             using begin = integral_range;
-            using end   = integral_range< T, End, End >;
+            using end = integral_range<T, End, End>;
         };
 
-        template< typename T, T End >
-        struct integral_range< T, End, End > : public empty_range
+        template <typename T, T End>
+        struct integral_range<T, End, End> : public empty_range
         {
             using begin = integral_range;
-            using end   = integral_range;
-
+            using end = integral_range;
         };
 
-    }
+    } // namespace ct
 
     // while_
     //
     //
-    template< typename Range, template< typename > class Condition, template< typename, typename > class Body, typename State, bool Finish = Range::empty() >
+    template <typename Range, template <typename> class Condition, template <typename, typename> class Body, typename State,
+              bool Finish = Range::empty()>
     struct while_;
 
-    namespace detail {
+    namespace detail
+    {
 
-        template< typename Range, template< typename > class Condition, template< typename, typename > class Body, typename State, bool Finish = !Condition< deref_t< Range > >::value >
+        template <typename Range, template <typename> class Condition, template <typename, typename> class Body, typename State,
+                  bool Finish = !Condition<deref_t<Range>>::value>
         struct while_inner
         {
-            using type = typename while_< next_t< Range >, Condition, Body, typename Body< deref_t< Range >, State >::type >::type;
+            using type = typename while_<next_t<Range>, Condition, Body, typename Body<deref_t<Range>, State>::type>::type;
         };
 
-        template< typename Range, template< typename > class Condition, template< typename, typename > class Body, typename State >
-        struct while_inner< Range, Condition, Body, State, true >
+        template <typename Range, template <typename> class Condition, template <typename, typename> class Body, typename State>
+        struct while_inner<Range, Condition, Body, State, true>
         {
             using type = State;
         };
 
-    }
+    } // namespace detail
 
-    template< typename Range, template< typename > class Condition, template< typename, typename > class Body, typename State, bool Finish >
-    struct while_ {
-        using type = typename detail::while_inner< Range, Condition, Body, State >::type;
+    template <typename Range, template <typename> class Condition, template <typename, typename> class Body, typename State, bool Finish>
+    struct while_
+    {
+        using type = typename detail::while_inner<Range, Condition, Body, State>::type;
     };
 
-    template< typename Range, template< typename > class Condition, template< typename, typename > class Body, typename State >
-    struct while_< Range, Condition, Body, State, true >
+    template <typename Range, template <typename> class Condition, template <typename, typename> class Body, typename State>
+    struct while_<Range, Condition, Body, State, true>
     {
         using type = State;
     };
-}
-
-
+} // namespace netser
 
 #endif
-
-

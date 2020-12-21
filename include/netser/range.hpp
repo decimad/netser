@@ -6,7 +6,9 @@
 #ifndef NETSER_RANGE_HPP__
 #define NETSER_RANGE_HPP__
 
-#include <netser/type_list.hpp>
+#include "meta/common.hpp"
+#include "netser/utility.hpp"
+#include <meta/tlist.hpp>
 
 namespace netser
 {
@@ -125,33 +127,15 @@ namespace netser
 
             // Remove all empty ranges before "returning" the concat range.
             template <typename... Ranges>
-            using make_concat_range = erase_if_t<concat_range<Ranges...>, is_empty_range>;
+            using make_concat_range = meta::type_list::erase_if<concat_range<Ranges...>, is_empty_range>;
         } // namespace detail
 
         template <typename... Ranges>
         using concat_range = detail::make_concat_range<Ranges...>;
 
-        //
-        // Make a range from any type compatible with the TypeList concept
-        // (no need to use for class type_list, it defines those already)
-        //
 
-        namespace detail
-        {
-
-            template <typename T>
-            struct make_type_list_range;
-
-            template <template <typename...> class TypeList, typename... Types>
-            struct make_type_list_range<TypeList<Types...>>
-            {
-                using type = iterator_range<type_list_iterator<Types...>, type_list_iterator<>>;
-            };
-
-        } // namespace detail
-
-        template <typename TypeList>
-        using type_list_range_t = typename detail::make_type_list_range<TypeList>::type;
+        template <meta::concepts::TypeList List>
+        using type_list_range_t = iterator_range<meta::common::iterator<List, 0>, meta::common::iterator<List, meta::common::size_v<List>>>;;
 
         // for_each
         //

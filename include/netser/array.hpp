@@ -6,15 +6,15 @@
 #ifndef NETSER_STATIC_ARRAY_HPP__
 #define NETSER_STATIC_ARRAY_HPP__
 
+#include <netser/mapping.hpp>
 #include <netser/fill_random.hpp>
-#include <netser/layout.hpp>
+#include <netser/layout_node.hpp>
 #include <netser/read.hpp>
 #include <netser/write.hpp>
-
+#include <netser/field_mixin.hpp>
 
 namespace netser
 {
-
     namespace detail
     {
 

@@ -6,13 +6,19 @@
 #ifndef NETSER_UTILITY_HPP__
 #define NETSER_UTILITY_HPP__
 
-#include <netser/type_list.hpp>
+#include "netser/utility.hpp"
+#include <meta/tlist.hpp>
+#include <meta/util.hpp>
+#include <type_traits>
 #include <utility>
 
 
 namespace netser
 {
     using std::size_t;
+
+    template<typename... Ts>
+    using tlist = meta::tlist<Ts...>;
 
     //
     // min/max
@@ -36,7 +42,7 @@ namespace netser
         template <typename Element>
         using push = dereference_stack<Element, Elements...>;
 
-        using pop = error_type;
+        using pop = meta::type_list::error_type;
 
         static constexpr size_t size = sizeof...(Elements);
 
@@ -130,7 +136,7 @@ namespace netser
     struct for_interval_ct<Begin, End, End>
     {
         template <template <typename Iterator> class Body, typename... Args>
-        static void execute(Args &&... args)
+        static void execute(Args &&... args [[maybe_unused]])
         {
         }
     };
@@ -151,14 +157,13 @@ namespace netser
     //
     // bit_range
     //
-
+/*
     template <int Begin, int End>
+    requires(End >= Begin)
     struct bit_range
     {
-        static_assert(End >= Begin, "Bad Range!");
-
-        static constexpr int begin = Begin;
-        static constexpr int end = End;
+        static constexpr int begin   = Begin;
+        static constexpr int end     = End;
         static constexpr size_t size = end - begin;
     };
 
@@ -169,6 +174,36 @@ namespace netser
     // Cannot call it difference, since we don't support splitting into multiple intervals.
     template <typename A, typename B>
     using front_remove = bit_range<B::end, max<int>(A::end, B::end)>; // placement of empty result might be off!
+*/
+
+    struct bit_range
+    {
+        template<int b, int e>
+        requires (b <= e)
+        constexpr bit_range(std::integral_constant<int, b>, std::integral_constant<int, e>)
+           : _Begin(b), _End(e)
+        {}
+
+        constexpr int begin()  const  { return _Begin; }
+        constexpr int end()    const  { return _End; }
+        constexpr size_t size() const { return _End - _Begin; }
+
+        int _Begin;
+        int _End;
+    };
+
+    template<int b, int e>
+    constexpr bit_range make_bit_range()
+    {
+        return bit_range(std::integral_constant<int, b>(), std::integral_constant<int, e>());
+    }
+
+    template<bit_range A, bit_range B>
+    constexpr bit_range intersection()
+    {
+        return make_bit_range<max<int>( A.begin(), B.begin() ),
+                              max<int>( min<int>(A.end(), B.end()), max<int>(A.begin(), B.begin()) ) >();
+    }
 
     template <typename T>
     constexpr T bit_mask(size_t bits)

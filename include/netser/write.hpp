@@ -6,6 +6,8 @@
 #ifndef NETSER_WRITE_HPP__
 #define NETSER_WRITE_HPP__
 
+#include <netser/platform.hpp>
+
 namespace netser
 {
 

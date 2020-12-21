@@ -52,7 +52,7 @@ namespace netser
         // Returns the next smaller Offset that has the alignment Alignment
         static constexpr int align_down(int Offset, size_t Alignment)
         {
-            return Offset - offset_remainder(Offset) % Alignment;
+            return (int) (Offset - offset_remainder(Offset) % Alignment);
         }
     };
 

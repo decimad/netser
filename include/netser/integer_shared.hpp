@@ -6,16 +6,16 @@
 #ifndef NETSER_INTEGER_SHARED_HPP__
 #define NETSER_INTEGER_SHARED_HPP__
 
+#include <netser/mem_access.hpp>
 #include <netser/zip_iterator.hpp>
 #include <type_traits>
+#include <meta/util.hpp>
 
 namespace netser
 {
-
     using std::size_t;
-    struct error_type;
 
-    template <bool Signed, size_t Bits, typename Endianess>
+    template <bool Signed, size_t Bits, byte_order Endianess>
     struct int_;
 
     template <typename Type>
@@ -23,7 +23,7 @@ namespace netser
     {
     };
 
-    template <bool Signed, size_t Bits, typename ByteOrder>
+    template <bool Signed, size_t Bits, byte_order ByteOrder>
     struct is_integer<int_<Signed, Bits, ByteOrder>> : public std::true_type
     {
     };
@@ -41,12 +41,12 @@ namespace netser
             static constexpr bool value = false;
         };
 
-        template <bool Signed, size_t Bits, typename Endianess>
+        template <bool Signed, size_t Bits, byte_order Endianess>
         struct decode_integer<int_<Signed, Bits, Endianess>>
         {
             static constexpr bool is_signed = Signed;
             static constexpr size_t bits = Bits;
-            using endianess = Endianess;
+            static constexpr byte_order endianess = Endianess;
 
             static constexpr bool value = true;
         };
@@ -56,7 +56,7 @@ namespace netser
             = std::conditional_t<(Bits <= 8), unsigned char,
                                  std::conditional_t<(Bits <= 16), unsigned short,
                                                     std::conditional_t<(Bits <= 32), unsigned int,
-                                                                       std::conditional_t<(Bits <= 64), unsigned long long, error_type>>>>;
+                                                                       std::conditional_t<(Bits <= 64), unsigned long long, meta::error_type>>>>;
 
     } // namespace detail
 

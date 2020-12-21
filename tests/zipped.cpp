@@ -23,7 +23,7 @@ struct ClockIdentity
 };
 
 // ClockIdentity
-using clock_identity_zipped = netser::zipped<net_uint<8>[8], MEMBER1(ClockIdentity::identity)>;
+using clock_identity_zipped = netser::zipped<net_uint<8>[8], mem2<&ClockIdentity::identity>>;
 
 clock_identity_zipped default_zipped(ClockIdentity);
 
@@ -39,7 +39,7 @@ struct PortIdentity
 };
 
 // PortIdentity
-using port_identity_zipped = netser::zipped<ZIPPED_MEMBER(PortIdentity::clock), net_uint<16>, MEMBER1(PortIdentity::port)>;
+using port_identity_zipped = netser::zipped<netser::detail::auto_zipped_member<&PortIdentity::clock>, net_uint<16>, mem2<&PortIdentity::port>>;
 
 port_identity_zipped default_zipped(PortIdentity);
 
@@ -88,12 +88,12 @@ struct Header
     }
 };
 
-using header_zipped = netser::zipped<net_uint<4>, MEMBER1(Header::transport_specific), net_uint<4>, MEMBER1(Header::message_type),
-                                     reserved<4>, net_uint<4>, MEMBER1(Header::version_ptp), net_uint<16>, MEMBER1(Header::message_length),
-                                     net_uint<8>, MEMBER1(Header::domain_number), reserved<8>, net_uint<8>, MEMBER1(Header::flag_field0),
-                                     net_uint<8>, MEMBER1(Header::flag_field1), net_uint<64>, MEMBER1(Header::correction_field),
-                                     reserved<32>, ZIPPED_MEMBER(Header::source_port_identity), net_uint<16>, MEMBER1(Header::sequence_id),
-                                     net_uint<8>, MEMBER1(Header::control_field), net_int<8>, MEMBER1(Header::log_message_interval)>;
+using header_zipped = netser::zipped<net_uint<4>, mem2<&Header::transport_specific>, net_uint<4>, mem2<&Header::message_type>,
+                                     reserved<4>, net_uint<4>, mem2<&Header::version_ptp>, net_uint<16>, mem2<&Header::message_length>,
+                                     net_uint<8>, mem2<&Header::domain_number>, reserved<8>, net_uint<8>, mem2<&Header::flag_field0>,
+                                     net_uint<8>, mem2<&Header::flag_field1>, net_uint<64>, mem2<&Header::correction_field>,
+                                     reserved<32>, mem2<&Header::source_port_identity>, net_uint<16>, mem2<&Header::sequence_id>,
+                                     net_uint<8>, mem2<&Header::control_field>, net_int<8>, mem2<&Header::log_message_interval>>;
 
 header_zipped default_zipped(Header);
 

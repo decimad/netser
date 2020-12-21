@@ -6,6 +6,7 @@
 #ifndef NETSER_RANDOM_INIT_HPP__
 #define NETSER_RANDOM_INIT_HPP__
 
+#include <netser/utility.hpp>
 #include <netser/zip_iterator.hpp>
 #include <random>
 

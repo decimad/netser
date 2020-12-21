@@ -7,22 +7,22 @@
 #define NETSER_FWD_HPP___
 
 #include <cstddef>
-using std::size_t;
+#include <type_traits>
+#include "layout_node.hpp"
 
 namespace netser
 {
+    using std::size_t;
 
-    template <typename Type, size_t Size, size_t Alignment, typename Endianess>
-    struct atomic_memory_access;
+    namespace concepts {
 
-    template <typename...>
-    struct memory_access_list;
+      template<typename T>
+      concept LayoutNodeArray = std::is_array<T>::value && concepts::LayoutNode<std::remove_all_extents_t<T>>;
 
-    struct le;
-    struct be;
+      template<typename T>
+      concept LayoutSpecifier = concepts::LayoutNode<T> || LayoutNodeArray<T>;
 
-    using little_endian = le;
-    using big_endian = be;
+    }
 
 } // namespace netser
 

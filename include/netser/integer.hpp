@@ -13,16 +13,16 @@
 #include <iostream>
 #endif
 #include <netser/integer_shared.hpp>
-#include <netser/layout.hpp>
+#include <netser/layout_node.hpp>
 #include <netser/mem_access.hpp>
-
+#include <netser/field_mixin.hpp>
 
 namespace netser
 {
 
     // Integer default mapping (If sub-byte, it must not span byte borders, if multi-byte, it must be byte-aligned)
-    template <bool Signed, size_t Bits, typename ByteOrder>
-    struct int_ : public detail::simple_field_layout_mixin<int_<Signed, Bits, ByteOrder>>
+    template <bool Signed, size_t Bits, byte_order Endianess>
+    struct int_ : public detail::simple_field_layout_mixin<int_<Signed, Bits, Endianess>>
     {
 
         //
@@ -30,8 +30,7 @@ namespace netser
         //
         static constexpr size_t count = 1;
         static constexpr size_t size = Bits;
-
-        using endianess = ByteOrder;
+        static constexpr byte_order endianess = Endianess;
 
         template <size_t Index, size_t BitOffset>
         struct get_field
@@ -91,10 +90,10 @@ namespace netser
     };
 
     template <size_t Size>
-    using net_uint = int_<false, Size, be>;
+    using net_uint = int_<false, Size, byte_order::be>;
 
     template <size_t Size>
-    using net_int = int_<true, Size, be>;
+    using net_int = int_<true, Size, byte_order::be>;
 
     using net_int8 = net_int<8>;
     using net_int16 = net_int<16>;
@@ -103,6 +102,8 @@ namespace netser
     using net_uint8 = net_uint<8>;
     using net_uint16 = net_uint<16>;
     using net_uint32 = net_uint<32>;
+
+    static_assert(concepts::LayoutSpecifier<net_uint32>);
 
 } // namespace netser
 

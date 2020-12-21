@@ -7,6 +7,6 @@
 #define NETSER_LAYOUT_FIELDS_HPP__
 
 #include <netser/integer.hpp>
-#include <netser/static_array.hpp>
+#include <netser/array.hpp>
 
 #endif

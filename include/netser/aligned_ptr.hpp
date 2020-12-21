@@ -6,8 +6,9 @@
 #ifndef NETSER_ALIGNED_PTR_HPP__
 #define NETSER_ALIGNED_PTR_HPP__
 
+#include <netser/platform.hpp>
 #include <netser/remainder.hpp>
-#include <netser/type_list.hpp>
+#include <meta/tlist.hpp>
 #include <netser/utility.hpp>
 #include <type_traits>
 
@@ -261,7 +262,6 @@ namespace netser
             template <typename AccessType>
             struct filter
             {
-                ;
                 static constexpr bool value = (AlignedPtr::get_max_alignment() % AccessType::alignment != 0)
                                               || !AlignedPtr::offset_range::contains(
                                                   AlignedPtr::align_down(OffsetBytes, AccessType::alignment),
@@ -275,7 +275,6 @@ namespace netser
             template <typename AccessType>
             struct filter
             {
-                ;
                 static constexpr bool value = (AlignedPtr::get_access_alignment(OffsetBytes) % AccessType::alignment != 0)
                                               || !AlignedPtr::offset_range::contains(OffsetBytes, OffsetBytes + int(AccessType::size));
             };
@@ -287,14 +286,14 @@ namespace netser
     // Filters out accesses from a list of accesses that would violate alignment and range restrictions
     // of the given aligned pointer.
     template <typename AlignedPtr, int OffsetBytes, typename AccessList>
-    using filtered_accesses_t = erase_if_t<platform_memory_accesses, detail::range_filter_move<AlignedPtr, OffsetBytes>::template filter>;
+    using filtered_accesses_t = meta::type_list::erase_if<platform_memory_accesses, detail::range_filter_move<AlignedPtr, OffsetBytes>::template filter>;
 
     // filtered_accesses_t
     // Filters out accesses that cannont be done
     //
     template <typename AlignedPtr, int OffsetBytes, typename AccessList>
     using filtered_accesses_nomove_t
-        = erase_if_t<platform_memory_accesses, detail::range_filter_nomove<AlignedPtr, OffsetBytes>::template filter>;
+        = meta::type_list::erase_if<platform_memory_accesses, detail::range_filter_nomove<AlignedPtr, OffsetBytes>::template filter>;
 } // namespace netser
 
 #endif

@@ -5,13 +5,11 @@
 #ifndef NETSER_NETSER_HPP__
 #define NETSER_NETSER_HPP__
 
-#include "netser_config.hpp"
 #include <netser/integer.hpp>
+#include <netser/array.hpp>
 #include <netser/layout.hpp>
 #include <netser/read.hpp>
-#include <netser/static_array.hpp>
 #include <netser/write.hpp>
 #include <netser/zipped.hpp>
-
 
 #endif

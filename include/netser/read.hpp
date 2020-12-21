@@ -6,6 +6,9 @@
 #ifndef NETSER_READ_HPP__
 #define NETSER_READ_HPP__
 
+#include <netser/platform.hpp>
+#include <netser/layout_iterator.hpp>
+
 namespace netser
 {
 

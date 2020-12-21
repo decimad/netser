@@ -79,7 +79,7 @@ struct ClockIdentity
 };
 
 // ClockIdentity
-using clock_identity_zipped = netser::zipped<net_uint<8>[8], MEMBER1(ClockIdentity::identity)>;
+using clock_identity_zipped = netser::zipped<net_uint<8>[8], mem2<&ClockIdentity::identity>>;
 
 clock_identity_zipped default_zipped(ClockIdentity);
 
@@ -95,7 +95,7 @@ struct PortIdentity
 };
 
 // PortIdentity
-using port_identity_zipped = netser::zipped<ZIPPED_MEMBER(PortIdentity::clock), net_uint<16>, MEMBER1(PortIdentity::port)>;
+using port_identity_zipped = netser::zipped<netser::detail::auto_zipped_member<&PortIdentity::clock>, net_uint<16>, mem2<&PortIdentity::port>>;
 
 port_identity_zipped default_zipped(PortIdentity);
 
@@ -144,12 +144,21 @@ struct Header
     }
 };
 
-using header_zipped = netser::zipped<net_uint<4>, MEMBER1(Header::transport_specific), net_uint<4>, MEMBER1(Header::message_type),
-                                     reserved<4>, net_uint<4>, MEMBER1(Header::version_ptp), net_uint<16>, MEMBER1(Header::message_length),
-                                     net_uint<8>, MEMBER1(Header::domain_number), reserved<8>, net_uint<8>, MEMBER1(Header::flag_field0),
-                                     net_uint<8>, MEMBER1(Header::flag_field1), net_uint<64>, MEMBER1(Header::correction_field),
-                                     reserved<32>, ZIPPED_MEMBER(Header::source_port_identity), net_uint<16>, MEMBER1(Header::sequence_id),
-                                     net_uint<8>, MEMBER1(Header::control_field), net_int<8>, MEMBER1(Header::log_message_interval)>;
+using header_zipped = netser::zipped<net_uint<4>, mem2<&Header::transport_specific>,
+                                     net_uint<4>, mem2<&Header::message_type>,
+                                     reserved<4>,
+                                     net_uint<4>,  mem2<&Header::version_ptp>,
+                                     net_uint<16>, mem2<&Header::message_length>,
+                                     net_uint<8>,  mem2<&Header::domain_number>,
+                                     reserved<8>,
+                                     net_uint<8>,  mem2<&Header::flag_field0>,
+                                     net_uint<8>,  mem2<&Header::flag_field1>,
+                                     net_uint<64>, mem2<&Header::correction_field>,
+                                     reserved<32>,
+                                     netser::detail::auto_zipped_member<&Header::source_port_identity>,
+                                     net_uint<16>, mem2<&Header::sequence_id>,
+                                     net_uint<8>,  mem2<&Header::control_field>,
+                                     net_int<8>,   mem2<&Header::log_message_interval>>;
 
 header_zipped default_zipped(Header);
 
@@ -160,7 +169,8 @@ struct Time
 };
 
 // Time
-using time_zipped = netser::zipped<net_uint<48>, MEMBER1(Time::secs_), net_uint<32>, MEMBER1(Time::nanos_)>;
+using time_zipped = netser::zipped<net_uint<48>, mem2<&Time::secs_>,
+                                   net_uint<32>, mem2<&Time::nanos_>>;
 
 time_zipped default_zipped(Time);
 
@@ -173,8 +183,9 @@ struct ClockQuality
 
 // ClockQuality
 using clock_quality_zipped
-    = netser::zipped<net_uint<8>, MEMBER1(ClockQuality::clock_class), net_uint<8>, MEMBER1(ClockQuality::clock_accuracy), net_uint<16>,
-                     MEMBER1(ClockQuality::offset_scaled_log_variance)>;
+    = netser::zipped<net_uint<8>,  mem2<&ClockQuality::clock_class>,
+                     net_uint<8>,  mem2<&ClockQuality::clock_accuracy>,
+                     net_uint<16>, mem2<&ClockQuality::offset_scaled_log_variance>>;
 
 clock_quality_zipped default_zipped(ClockQuality);
 
@@ -205,11 +216,15 @@ struct Announce
 };
 
 // Announce
-using announce_zipped = netser::zipped<ZIPPED_MEMBER(Announce::origin_timestamp), net_uint<16>, MEMBER1(Announce::current_utc_offset),
-                                       net_uint<8>, netser::constant<unsigned char, 0>, net_uint<8>,
-                                       MEMBER1(Announce::grandmaster_priority1), ZIPPED_MEMBER(Announce::grandmaster_clock_quality),
-                                       net_uint<8>, MEMBER1(Announce::grandmaster_priority2), ZIPPED_MEMBER(Announce::grandmaster_identity),
-                                       net_uint<16>, MEMBER1(Announce::steps_removed), net_uint<8>, MEMBER1(Announce::time_source)>;
+using announce_zipped = netser::zipped<netser::detail::auto_zipped_member<&Announce::origin_timestamp>,
+                                       net_uint<16>, mem2<&Announce::current_utc_offset>,
+                                       net_uint<8>,  netser::constant<unsigned char, 0>,
+                                       net_uint<8>,  mem2<&Announce::grandmaster_priority1>,
+                                       netser::detail::auto_zipped_member<&Announce::grandmaster_clock_quality>,
+                                       net_uint<8>,  mem2<&Announce::grandmaster_priority2>,
+                                       netser::detail::auto_zipped_member<&Announce::grandmaster_identity>,
+                                       net_uint<16>, mem2<&Announce::steps_removed>,
+                                       net_uint<8>,  mem2<&Announce::time_source>>;
 
 announce_zipped default_zipped(Announce);
 

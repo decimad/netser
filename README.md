@@ -16,16 +16,16 @@ A motivational example of what this lib aims to provide:
 
 	// Zipped Layout <-> Mapping definition: Describe the packet layout and its mapping to
     // structure members
-	using zipped = netser::zipped< 
+	using zipped = netser::zipped<
 		net_uint<15>, MEMBER1(my_struct::int_member1),
 		net_uint<17>, MEMBER1(my_struct::int_member2)
 	>;
-	
+
 	// Allow netser to find the default zipped definition for my_struct
     // by providing an overload of the function "default_zipped" inside the
     // namespace my_struct lives in (ADL).
 	zipped default_zipped(my_struct);
-	
+
     void foo()
     {
 		char buffer[32];
@@ -38,7 +38,7 @@ A motivational example of what this lib aims to provide:
 netser is tested with Visual Studio 2015 update 3, Visual Studio "15" preview, clang and ARM's current gcc port.
 The assembly code was inspected to assure the generated code is equivalent to the hand-crafted platform dependant code in reasonable optimization settings (the compiler needs to heavily inline the metaprogramming generated stuff).
 
-###aligned_ptr
+### aligned_ptr
 The aligned_ptr template encapsulates a (packet-buffer-)pointer together with its alignment parameters and a valid-access-range:
 
 	template< typename T, size_t Alignment, size_t Defect, typename AccessRange >
@@ -54,7 +54,7 @@ which returns true iff an access beginning at "begin" and ending at "end" would 
 
 	template< int Begin, int End >
 	struct bounded;       // restrict accesses to the given range [Begin, End)
-	
+
     template< int Begin >
     struct lower_bounded; // restrict accesses to offsets >= Begin
 
@@ -78,12 +78,12 @@ Examples with explanation:
 
 		// same as above, but also specify that netser can access the three bytes preceeding the pointer too.
         auto ptr3 = make_aligned_ptr<4,3,0,lower_bounded<-3>>( &buffer[3] );
-        
+
         // equivalent short notation for above
         auto ptr3 = make_aligned_ptr<4,2,3>( buffer );
     }
 
-###network packet layout
+### network packet layout
 The most important part of this library is that it lets you define the memory layout of a network packet with a variadic type list of data fields:
 
 	using mypacket = layout< field1, field2, field3, ... >;
@@ -95,17 +95,17 @@ The most important type of field is probably netser::int_. It defines an integer
 If you're facing arrays of a static size inside packets, you can decorate the fields with an array subscript:
 
 	using arraypacket = layout< net_uint16[8] >;
-    
+
 It is not uncommon that you will face multiple different packet definitions which share common sub-packets, that's why you can nest layouts too, you will probably use type aliases for this, however, written out:
 
     using mypacket = layout< layout< uint16, net_uint32 >, net_uint8 >;
 
-###mappings
+### mappings
 This library is about serializing and deserializing networks packets, so the question is, from or to where? netser uses structure mappings, which describe the host data representation of a network packet.
 Consider that you have a layout and its corresponding c++ structure definition:
-	
+
     using packet_layout = layout< net_uint32 >;
-    
+
     struct packet {
     	unsigned int member;
     };
@@ -113,10 +113,10 @@ Consider that you have a layout and its corresponding c++ structure definition:
 Now you want to serialize packet into a packet_layout or deserialize packet_layout into packet. That's when you have to define a mapping:
 
 	using packet_mapping = mapping_list< mem< packet, unsigned int, &packet::member > >;
-    
+
 The order of member descriptors inside this mapping list is assumed to correspond to the order of fields in the packet layout description when providing both to the read and write functions.
 
-###memory accesses
+### memory accesses
 One motivation for writing this library, beside avoiding hand crafted casting, masking and bit shifting, was that on some microcontroller platforms, namely a few ARM Cortex-M platforms, unaligned memory accesses will result in a runtime fault. This library is designed to respect the available memory accesses and their alignment requirements during serialization. One step to this goal was already taken with providing the aligned_ptr-template, which lets netser reason about what the alignment of the serialization buffer actually is. The other part to this goal is the definition of the platform memory access list. This list specifies the available memory accesses in size-ascending order, specifying their size and alignment requirements as well as their byte order. It must be provided in a file called "netser_config.hpp" and be customized to match your platform.
 An exemplary definition:
 
@@ -145,12 +145,12 @@ With this in mind, we can already get our work done, here's an example:
 	void sample()
     {
     	char buffer[4];
-    	using mylayout  = layout< net_uint32 >; 
+    	using mylayout  = layout< net_uint32 >;
         using mymapping = mapping_list< mem< packet, unsigned int, &packet::member > >;
 
 		packet thepacket;
 		auto ptr = make_aligned_ptr<4>(buffer);
-        
+
         read <mylayout, mymapping>(ptr, thepacket);	// deserialize
         write<mylayout, mymapping>(ptr, thepacket);	// serialize
     }
@@ -167,7 +167,7 @@ Here's the example of the preceeding section, defined with a zipped mapping:
 	struct packet {
     	unsigned int member;
     };
-    
+
     using zipped_packet = zipped<
     	net_uint32, MEMBER1(packet::member)
     >;
@@ -177,10 +177,10 @@ Here's the example of the preceeding section, defined with a zipped mapping:
 	void sample()
     {
     	char buffer[4];
-  
+
 		packet thepacket;
 		auto ptr = make_aligned_ptr<4>(buffer);
-        
+
         ptr >> thepacket;
         ptr << thepacket;
     }

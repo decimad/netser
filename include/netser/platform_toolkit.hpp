@@ -6,7 +6,14 @@
 #ifndef NETSER_PLATFORM_GENERIC_HPP__
 #define NETSER_PLATFORM_GENERIC_HPP__
 
-#include "netser_config.hpp"
+#include <cstddef>
+#include <netser/mem_access.hpp>
+
+#if defined(_MSC_VER)
+#define NETSER_FORCE_INLINE __forceinline
+#elif defined(__GNUC__)
+#define NETSER_FORCE_INLINE inline __attribute__((always_inline))
+#endif
 
 namespace netser
 {
@@ -37,7 +44,7 @@ namespace netser
 
     NETSER_FORCE_INLINE unsigned short byte_swap(platform_generic_wrapper<unsigned short> val)
     {
-#ifdef __GNUC__
+#if defined(__GNUC__)
         return __builtin_bswap16(val.val);
 #else
         using namespace detail;
@@ -69,6 +76,7 @@ namespace netser
                | mirror_byte<6>(v) | mirror_byte<7>(v);
 #endif
     }
+
 } // namespace netser
 
 #endif

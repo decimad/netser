@@ -12,6 +12,12 @@
 
 namespace netser
 {
+    namespace concepts {
+
+        template<auto T>
+        concept MemberPtr = std::is_member_object_pointer_v<decltype(T)>;
+
+    }
 
     template <typename T>
     constexpr bool is_empty_mapping()
@@ -51,8 +57,8 @@ namespace netser
     template <typename Mapping>
     struct mapping_iterator_ct<Mapping, 0>
     {
-        using dereference = error_type;
-        using advance = error_type;
+        using dereference = meta::error_type;
+        using advance = meta::error_type;
 
         static constexpr bool is_end = true;
     };
@@ -101,12 +107,12 @@ namespace netser
 
         constexpr auto dereference() const
         {
-            return error_type();
+            return meta::error_type();
         }
 
         constexpr auto advance() const
         {
-            return error_type();
+            return meta::error_type();
         }
 
         static constexpr bool is_end = ct_iterator::is_end;
@@ -171,7 +177,7 @@ namespace netser
         template <typename... Types>
         struct pop_struct
         {
-            using result = error_type;
+            using result = meta::error_type;
         };
 
         template <typename Type0, typename... Tail>
@@ -211,7 +217,20 @@ namespace netser
         };
     };
 
-    template <typename Class, typename Type, Type Class::*Ptr, typename MappingsList>
+
+    template<auto MemberPtr>
+    requires(std::is_member_object_pointer_v<decltype(MemberPtr)>)
+    struct member_object_pointer_traits;
+
+    template<typename Container, typename Type, Type Container::*Ptr>
+    struct member_object_pointer_traits<Ptr>
+    {
+        using container_type = Container;
+        using value_type = Type;
+    };
+
+    template<auto Ptr, typename MappingsList>
+    requires(concepts::MemberPtr<Ptr>)
     struct mapped_member
     {
         using base = MappingsList;
@@ -221,7 +240,7 @@ namespace netser
         using nested_pop = typename base::pop;
         using pop = detail::mapping_pop_result<typename nested_pop::member,
                                                std::conditional_t<is_empty_mapping<typename nested_pop::tail_mapping>(), mapping_list<>,
-                                                                  mapped_member<Class, Type, Ptr, typename nested_pop::tail_mapping>>,
+                                                                  mapped_member<Ptr, typename nested_pop::tail_mapping>>,
                                                typename nested_pop::refstack::template push<mapped_member>>;
 
         template <typename Arg>
@@ -275,17 +294,18 @@ namespace netser
         T &enum_;
     };
 
-    //
-    // I'm not conviced yet it is an acceptable hack to return an enum wrapper, but it is a
-    // convenient solution to support enums for now.
-    template <typename Class, typename Type, Type Class::*Ptr, bool IsEnum = std::is_enum<Type>::value>
+    template<auto MemberPtr, bool IsEnum = std::is_enum_v<decltype(MemberPtr)>>
+    requires(concepts::MemberPtr<MemberPtr>)
     struct mem
     {
-        static constexpr size_t size = 1;
-        using value_type = Type;
+        using member_info = member_object_pointer_traits<MemberPtr>;
 
-        static constexpr Type Class::*pointer = Ptr;
-        static constexpr const Type Class::*const_pointer = Ptr;
+        static constexpr size_t size = 1;
+        using value_type     = typename member_info::value_type;
+        using container_type = typename member_info::container_type;
+
+        static constexpr value_type container_type::*pointer = MemberPtr;
+        static constexpr const value_type container_type::*const_pointer = MemberPtr;
 
         using pop = detail::mapping_pop_result<mem, mapping_list<>, dereference_stack<mem>>;
 
@@ -293,40 +313,41 @@ namespace netser
         //  dereference_stack interface
         //
         template <typename Ref>
-        static Type &dereference(Ref &ref)
+        static value_type &dereference(Ref &ref)
         {
             return ref.*pointer;
         }
 
         template <typename Ref>
-        static const Type &dereference(const Ref &ref)
+        static const value_type &dereference(const Ref &ref)
         {
             return ref.*const_pointer;
         }
     };
 
-    template <typename Class, typename Type, Type Class::*Ptr>
-    struct mem<Class, Type, Ptr, true>
+    template<auto MemberPtr>
+    requires(concepts::MemberPtr<MemberPtr>)
+    struct mem<MemberPtr, true>
     {
-        static constexpr size_t size = 1;
-        using value_type = Type;
+        using member_info = member_object_pointer_traits<MemberPtr>;
 
-        static constexpr Type Class::*pointer = Ptr;
-        static constexpr const Type Class::*const_pointer = Ptr;
+        static constexpr size_t size = 1;
+        using value_type     = typename member_info::value_type;
+        using container_type = typename member_info::container_type;
+
+        static constexpr value_type container_type::*pointer = MemberPtr;
+        static constexpr const value_type container_type::*const_pointer = MemberPtr;
 
         using pop = detail::mapping_pop_result<mem, mapping_list<>, dereference_stack<mem>>;
 
-        //
-        //  dereference_stack interface
-        //
         template <typename Ref>
-        static enum_wrapper<Type> dereference(Ref &ref)
+        static enum_wrapper<value_type> dereference(Ref &ref)
         {
             return {ref.*pointer};
         }
 
         template <typename Ref>
-        static enum_wrapper<const Type> dereference(const Ref &ref)
+        static enum_wrapper<const value_type> dereference(const Ref &ref)
         {
             return {ref.*const_pointer};
         }
@@ -473,11 +494,6 @@ namespace netser
 } // namespace netser
 
 // I will be so happy once C++17 allows for auto value arguments.
-#define MEMBER(Class, Member)                                                                                                              \
-    ::netser::mem<Class, std::remove_reference_t<decltype(::netser::detail::deduce_type(&Class::Member))>, &Class::Member>
-#define MEMBER1(MemberAccess)                                                                                                              \
-    ::netser::mem<decltype(::netser::detail::deduce_class(&MemberAccess)),                                                                 \
-                  std::remove_reference_t<decltype(::netser::detail::deduce_type(&MemberAccess))>, &MemberAccess>
 #define MEMBER_ARRAY(Class, Member)                                                                                                        \
     ::netser::array_member<Class, decltype(::netser::detail::deduce_member_array_type(&Class::Member)),                                    \
                            ::netser::detail::deduce_member_array_size(&Class::Member), &Class::Member>

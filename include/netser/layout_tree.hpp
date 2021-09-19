@@ -50,15 +50,31 @@ namespace netser {
     template<typename TreeIterator, size_t Offset = 0>
     struct layout_meta_iterator {
         using iterator = TreeIterator;
-        static constexpr size_t offset = Offset;
+        using dereference = detail::placed_field<meta::dereference_t<TreeIterator>, Offset>;
+        using advance     = netser::layout_meta_iterator<meta::advance_t<TreeIterator>, (Offset + meta::dereference_t<TreeIterator>::size)>;
+
+        static constexpr size_t get_offset()
+        {
+            return Offset;
+        }
     };
 
-    template<meta::concepts::Iterator TreeIterator, size_t Offset>
-    auto advance(netser::layout_meta_iterator<TreeIterator, Offset>) ->
-        netser::layout_meta_iterator<meta::advance_t<TreeIterator>, (Offset + meta::dereference_t<TreeIterator>::size)>;
+    template<meta::concepts::Sentinel TreeIterator, size_t Offset>
+    struct layout_meta_iterator<TreeIterator, Offset> {
+        using iterator = TreeIterator;
 
-    template<typename TreeIterator, size_t Offset>
-    auto dereference(netser::layout_meta_iterator<TreeIterator, Offset>) -> detail::placed_field<meta::dereference_t<TreeIterator>, Offset>;
+        static constexpr size_t get_offset()
+        {
+            return Offset;
+        }
+    };
+
+//    template<meta::concepts::Iterator TreeIterator, size_t Offset>
+//    auto advance(netser::layout_meta_iterator<TreeIterator, Offset>) ->
+//        netser::layout_meta_iterator<meta::advance_t<TreeIterator>, (Offset + meta::dereference_t<TreeIterator>::size)>;
+//
+//    template<typename TreeIterator, size_t Offset>
+//    auto dereference(netser::layout_meta_iterator<TreeIterator, Offset>) -> detail::placed_field<meta::dereference_t<TreeIterator>, Offset>;
 
     template <typename TreeIterator, size_t Offset>
     auto is_sentinel(netser::layout_meta_iterator<TreeIterator, Offset>) -> decltype(is_sentinel(std::declval<TreeIterator>()));
@@ -77,10 +93,6 @@ namespace netser {
 
 //    template<meta::concepts::Iterator Iter, size_t Offset1, size_t Offset2>
 //    std::true_type iterator_equal(layout_meta_iterator<Iter, Offset1>, layout_meta_iterator<Iter, Offset2>);
-
-    // devdebt: range vs. iterator
-    template<typename LayoutMetaIterator>
-    static constexpr size_t offset_v = LayoutMetaIterator::offset;
 
 }
 

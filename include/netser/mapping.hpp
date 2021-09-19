@@ -43,17 +43,17 @@ namespace netser
         {
         }
 
-        constexpr auto &dereference() const
-        {
-            return netser::dereference<path_enumerator>(arg_);
-        }
-
         constexpr auto getval() const
         {
             return netser::dereference<path_enumerator>(arg_);
         }
 
-        constexpr auto advance() const
+        constexpr auto &operator*() const
+        {
+            return netser::dereference<path_enumerator>(arg_);
+        }
+
+        constexpr auto operator++() const
         {
             return mapping_iterator<meta::advance_t<MappingRange>, Arg>(arg_);
         }
@@ -73,12 +73,12 @@ namespace netser
         {
         }
 
-        constexpr auto dereference() const
+        constexpr auto operator*() const
         {
             return meta::error_type();
         }
 
-        constexpr auto advance() const
+        constexpr auto operator++() const
         {
             return meta::error_type();
         }

@@ -36,7 +36,7 @@ namespace netser
         {
             static NETSER_FORCE_INLINE auto write(ZipIterator it)
             {
-                return it.layout().get().template static_offset<int(offset_v<typename ZipIterator::layout_iterator::range>)>();
+                return it.layout().get().template static_offset<ZipIterator::layout_iterator::get_offset()>();
             }
         };
 

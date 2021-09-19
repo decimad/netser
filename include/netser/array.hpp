@@ -117,11 +117,11 @@ namespace netser
 
                     read_inline<layout<Field>, mapping_list<identity_member>>(
                         it.layout().get().template stride_offset<Field::size / 8, offset / 8>(i),
-                        it.mapping().dereference()[i]
+                        (*it.mapping())[i]
                     );
                 }
 
-                return it.advance();
+                return ++it;
             }
         }
 
@@ -141,11 +141,11 @@ namespace netser
                 {
                     write_inline<layout<Field>, mapping_list<identity_member>>(
                         it.layout().get().template stride_offset<Field::size / 8, offset / 8>(i),
-                        it.mapping().dereference()[i]
+                        (*it.mapping())[i]
                     );
                 }
 
-                return it.advance();
+                return ++it;
             }
         }
 
@@ -156,7 +156,7 @@ namespace netser
             for (size_t i = 0; i < Size; ++i)
             {
                 ::netser::fill_mapping_random<layout_enumerator_t<layout<Field>>>(
-                    make_mapping_iterator<mapping_list<identity_member>>(it.dereference()[i]), std::forward<Generator>(generator)
+                    make_mapping_iterator<mapping_list<identity_member>>((*it)[i]), std::forward<Generator>(generator)
                 );
             }
         }

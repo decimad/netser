@@ -222,7 +222,7 @@ namespace netser
     {
 #ifdef NETSER_DEBUG_CONSOLE
         std::cout << "Generating memory access List (";
-        std::cout << "Field size: " << meta::dereference_t<LayoutIterator>::size
+        std::cout << "Field size: " << meta::dereference_t<typename LayoutIterator::range>::size
                   << " bits. Ptr-Alignment: " << layit.get_access_alignment(0) << ")... ";
 #endif
         using accesses = detail::generate_partial_memory_access_list_t<LayoutIterator, unsigned int>;
@@ -239,17 +239,17 @@ namespace netser
     constexpr auto int_<Signed, Bits, ByteOrder>::read_span(ZipIterator it)
     {
         static_assert(!std::is_const<decltype(it.mapping())>::value, "Error!");
-        static_assert(!std::is_const<decltype(it.mapping().dereference())>::value, "Error!");
+        static_assert(!std::is_const<decltype(*it.mapping())>::value, "Error!");
 
 #ifdef NETSER_DEBUG_CONSOLE
         std::cout << "reading integer span:\n";
 #endif
-        it.mapping().dereference() = read(it.layout());
+        *it.mapping() = read(it.layout());
 
 #ifdef NETSER_DEBUG_CONSOLE
         std::cout << "read span complete.\n";
 #endif
-        return it.advance();
+        return ++it;
     }
 
 } // namespace netser

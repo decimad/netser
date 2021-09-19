@@ -13,6 +13,7 @@
 #ifdef NETSER_DEBUG_CONSOLE
 #include <iostream>
 #endif
+
 #include <netser/integer_shared.hpp>
 #include <netser/layout_tree.hpp>
 #include <netser/mem_access.hpp>
@@ -85,9 +86,9 @@ namespace netser
             std::uniform_int_distribution<std::conditional_t<std::is_same<stage_type, unsigned char>::value, unsigned short, stage_type>>
                 dis(min(), max());
 
-            using lhs_type = std::remove_reference_t<decltype(it.dereference())>;
+            using lhs_type = std::remove_reference_t<decltype(*it)>;
 
-            it.dereference() = static_cast<lhs_type>(static_cast<stage_type>(dis(generator)));
+            *it = static_cast<lhs_type>(static_cast<stage_type>(dis(generator)));
         }
 
         template <typename DestType, typename T>
@@ -119,82 +120,3 @@ namespace netser
 #include <netser/integer_write.hpp>
 
 #endif
-
-/*
-
-../system/netser/include/netser/integer_write.hpp: In instantiation of '
-    static auto netser::detail::write_integer_algorithm::execute_access<
-        PlacedAccess,
-        Endianess,
-        FieldSize,
-        BitsWritten,
-        FieldWritten,
-        netser::detail::write_integer_algorithm::execute_action::collect_all
-    >::execute(
-        ZipIterator,
-        netser::detail::write_integer_algorithm::execute_access<
-            PlacedAccess,
-            Endianess,
-            FieldSize,
-            BitsWritten,
-            FieldWritten,
-            netser::detail::write_integer_algorithm::execute_action::collect_all
-        >::type
-    ) [with
-        ZipIterator = netser::zip_iterator<
-            netser::layout_iterator<netser::aligned_ptr<void, 4, 2, netser::lower_bounded<-2>>,
-            meta::iterator_range<
-                netser::layout_meta_iterator<
-                    meta::tree_iterator<netser::layout_tree_ctx,
-                        meta::tlist<
-                            netser::int_<false, 8, netser::byte_order::big_endian>,
-                            meta::detail::SE<netser::array_layout<netser::int_<false, 8, netser::byte_order::big_endian>, 8, 8>, 0>,
-                            meta::detail::SE<netser::layout<netser::int_<false, 8, netser::byte_order::big_endian> [8]>, 0>,
-                            meta::detail::SE<netser::layout<netser::layout<netser::int_<false, 8, netser::byte_order::big_endian> [8]>, netser::int_<false, 16, netser::byte_order::big_endian> >, 0>,
-                            meta::detail::SE<netser::layout<netser::int_<false, 4, netser::byte_order::big_endian>, netser::int_<false, 4, netser::byte_order::big_endian>, netser::int_<false, 4, netser::byte_order::big_endian>, netser::int_<false, 4, netser::byte_order::big_endian>, netser::int_<false, 16, netser::byte_order::big_endian>, netser::int_<false, 8, netser::byte_order::big_endian>, netser::int_<false, 8, netser::byte_order::big_endian>, netser::int_<false, 8, netser::byte_order::big_endian>, netser::int_<false, 8, netser::byte_order::big_endian>, netser::int_<false, 64, netser::byte_order::big_endian>, netser::int_<false, 32, netser::byte_order::big_endian>, netser::layout<netser::layout<netser::int_<false, 8, netser::byte_order::big_endian> [8]>, netser::int_<false, 16, netser::byte_order::big_endian> >, netser::int_<false, 16, netser::byte_order::big_endian>, netser::int_<false, 8, netser::byte_order::big_endian>, netser::int_<true, 8, netser::byte_order::big_endian> >, 11> >,
-                        meta::traversals::lr
-                    >,
-                    0
-                >,
-                netser::layout_meta_iterator<
-                    meta::tree_iterator<
-                        netser::layout_tree_ctx,
-                        meta::tlist<meta::detail::end_type>,
-                        meta::traversals::lr
-                    >,
-                    0>
-                >
-            >,
-            netser::mapping_iterator<
-                netser::mapping_iterator_ct<
-                    netser::mapping_list<
-                        netser::mapped_member<
-                            &uptp::msg::Header::source_port_identity,
-                            netser::mapping_list<
-                                netser::mapped_member<&uptp::PortIdentity::clock,
-                                    netser::mapping_list<
-                                        netser::mem<&uptp::ClockIdentity::identity, false>
-                                    >
-                                >,
-                                netser::mem<&uptp::PortIdentity::port, false>
-                            >
-                        >,
-                        netser::mem<&uptp::msg::Header::sequence_id, false>,
-                        netser::mem<&uptp::msg::Header::control_field, false>,
-                        netser::mem<&uptp::msg::Header::log_message_interval, false>
-                    >,
-                    5
-                >,
-                const uptp::msg::Header&,
-                false
-            >
-        >;
-
-        PlacedAccess = netser::placed_atomic_memory_access<netser::atomic_memory_access<unsigned char, 1, 1, netser::byte_order::little_endian>, 0>;
-        netser::byte_order Endianess = netser::byte_order::big_endian;
-        unsigned int FieldSize = 8;
-        unsigned int BitsWritten = 0;
-        unsigned int FieldWritten = 0;
-        netser::detail::write_integer_algorithm::execute_access<PlacedAccess, Endianess, FieldSize, BitsWritten, FieldWritten, netser::detail::write_integer_algorithm::execute_action::collect_all>::type = unsigned char]':
-
-*/

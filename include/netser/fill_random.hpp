@@ -28,8 +28,8 @@ namespace netser
             static void _(MappingIterator it, Generator &&generator)
             {
                 meta::dereference_t<LayoutIterator>::field::template fill_random(it, generator);
-                using next_type = decltype(it.advance());
-                return fill_random<meta::advance_t<LayoutIterator>, next_type>::template _(it.advance(), std::forward<Generator>(generator));
+                using next_type = decltype(++it);
+                return fill_random<meta::advance_t<LayoutIterator>, next_type>::template _(++it, std::forward<Generator>(generator));
             }
         };
 

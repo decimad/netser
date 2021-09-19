@@ -250,7 +250,7 @@ namespace netser
                 NETSER_FORCE_INLINE static auto execute(ZipIterator it, type val = 0)
                 {
                     return execute_access<PlacedAccess, Endianess, FieldSize, BitsWritten + num_bits, 0>::template execute(
-                        it.advance(), val | ((bit_mask<type>(num_bits) & static_cast<type>(it.mapping().dereference())) << shift_up));
+                        ++it, val | ((bit_mask<type>(num_bits) & static_cast<type>(*it.mapping())) << shift_up));
                 }
             };
 
@@ -283,7 +283,7 @@ namespace netser
                                           FieldWritten + num_bits>::template execute(it,
                                                                                      val
                                                                                          | (bit_mask<type>(num_bits)
-                                                                                            & static_cast<type>(it.mapping().dereference()
+                                                                                            & static_cast<type>(*it.mapping()
                                                                                                                 >> shift_down)));
                 }
             };
@@ -293,7 +293,7 @@ namespace netser
             NETSER_FORCE_INLINE static auto write_integer(ZipIterator it)
             {
                 using layout_iterator = typename ZipIterator::layout_iterator;
-                using layout_iterator_ct = typename layout_iterator::range;
+                using layout_iterator_ct = typename layout_iterator::iterator;
                 using placed_field = meta::dereference_t<layout_iterator_ct>;
                 using field = typename placed_field::field;
                 using ptr_type = typename layout_iterator::pointer_type;

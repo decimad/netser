@@ -28,26 +28,26 @@ namespace netser {
         const layout_iterator  layout_;
         const mapping_iterator mapping_;
 
-        using next_layout_iterator  = decltype(layout_.advance());
-        using next_mapping_iterator = decltype(mapping_.advance());
+        using next_layout_iterator  = decltype(++layout_);
+        using next_mapping_iterator = decltype(++mapping_);
         using next_iterator_type    = zip_iterator< next_layout_iterator, next_mapping_iterator >;
 
     public:
-        constexpr auto advance() const
+        constexpr auto operator++() const
         {
             static_assert(!is_end, "Advancing an end iterator!");
 
             if constexpr (!is_end)
             {
                 return zip_iterator< next_layout_iterator, next_mapping_iterator >(
-                    layout_.advance(),
-                    mapping_.advance()
+                    ++layout_,
+                    ++mapping_
                 );
             }
         }
 
-        constexpr auto dereference() const {
-            return std::make_pair( layout_.dereference(), mapping_.dereference() );
+        constexpr auto operator*() const {
+            return std::make_pair( *layout_, *mapping_ );
         }
 
         constexpr layout_iterator layout() const

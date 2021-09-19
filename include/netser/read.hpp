@@ -23,8 +23,8 @@ namespace netser
         {
             static NETSER_FORCE_INLINE auto read(ZipIterator it)
             {
-                using type = decltype(meta::dereference_t<typename ZipIterator::layout_iterator::range>::read_span(it));
-                auto result = meta::dereference_t<typename ZipIterator::layout_iterator::range>::read_span(it);
+                using type = decltype(meta::dereference_t<typename ZipIterator::layout_iterator>::read_span(it));
+                auto result = meta::dereference_t<typename ZipIterator::layout_iterator>::read_span(it);
                 return read_zip_iterator_struct<type>::read(result);
             }
         };
@@ -34,9 +34,9 @@ namespace netser
         {
             static NETSER_FORCE_INLINE auto read(ZipIterator it)
             {
-                static_assert(offset_v<typename ZipIterator::layout_iterator::range> % 8 == 0, "Must!");
+                static_assert(ZipIterator::layout_iterator::get_offset() % 8 == 0, "Must!");
                 // return a pointer one behind the last field (for continuation)
-                return it.layout().get().template static_offset<int(offset_v<typename ZipIterator::layout_iterator::range>) / 8>();
+                return it.layout().get().template static_offset<ZipIterator::layout_iterator::get_offset() / 8>();
             }
         };
 

@@ -6,22 +6,35 @@
 #ifndef NETSER_LAYOUT_MAPPING_HPP__
 #define NETSER_LAYOUT_MAPPING_HPP__
 
-#include "meta/tree.hpp"
-#include <type_traits>
+#include <meta/tree.hpp>
 #include <netser/utility.hpp>
-#include <netser/mapping_tree.hpp>
-
+#include <type_traits>
 
 namespace netser
 {
-    namespace concepts {
 
-//        template<typename T>
-//        concept Mapping
-//        {
-//
-//        }
+    template<typename Mapping>
+    using mapping_begin_t = meta::tree_begin<Mapping, meta::contexts::intrusive, meta::traversals::lr>;
 
+    template<typename Mapping>
+    using mapping_end_t   = meta::tree_end<Mapping, meta::contexts::intrusive, meta::traversals::lr>;
+
+    template<typename Mapping>
+    using mapping_range_t = meta::tree_range_t<Mapping, meta::contexts::intrusive, meta::traversals::lr>;
+
+    template<meta::concepts::Enumerator MappingPath, typename T>
+    auto&& dereference(T&& arg)
+    {
+        if constexpr (!meta::concepts::Sentinel<MappingPath>)
+        {
+            return dereference<meta::advance_t<MappingPath>>(
+                meta::dereference_t<MappingPath>::apply(std::forward<T>(arg))
+            );
+        }
+        else
+        {
+            return arg;
+        }
     }
 
     namespace concepts {

@@ -10,8 +10,6 @@
 #include <meta/tlist.hpp>
 #include <netser/integer.hpp>
 #include <netser/reserved.hpp>
-#include <netser/layout_tree.hpp>
-#include <netser/layout_iterator.hpp>
 #include <netser/mapping.hpp>
 #include <netser/layout.hpp>
 
@@ -139,7 +137,7 @@ namespace netser
     template <typename Zipped, typename AlignedPtr, typename Arg>
     auto NETSER_FORCE_INLINE write_zipped_inline(AlignedPtr dest, Arg &&src)
     {
-        using layout = typename Zipped::layout;
+        using layout  = typename Zipped::layout;
         using mapping = typename Zipped::mapping;
 
         return write_inline<layout, mapping>(dest, std::forward<Arg>(src));

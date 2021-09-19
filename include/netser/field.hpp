@@ -1,18 +1,239 @@
-//          Copyright Michael Steinberg 2016
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE_1_0.txt or copy at
-//          http://www.boost.org/LICENSE_1_0.txt)
+#ifndef FIELD_ACCESS_HPP___
+#define FIELD_ACCESS_HPP___
 
-#ifndef NETSER_INTEGER_WRITE_HPP__
-#define NETSER_INTEGER_WRITE_HPP__
-
-#include <netser/integer.hpp>
 #include <netser/range.hpp>
 #include <netser/aligned_ptr.hpp>
 #include <netser/mem_access.hpp>
 
 namespace netser
 {
+    // fixme --->
+
+    template <bool Signed, size_t Bits, byte_order Endianess>
+    struct int_;
+
+    namespace detail {
+        template <typename Type>
+        struct is_integer : public std::false_type
+        {
+        };
+
+        template <bool Signed, size_t Bits, byte_order ByteOrder>
+        struct is_integer<int_<Signed, Bits, ByteOrder>> : public std::true_type
+        {
+        };
+
+        // true iff T is an instance of netser::int_
+        template <typename T>
+        constexpr bool is_integer_v = is_integer<T>::value;
+    }
+
+    // <--- fixme
+
+    namespace detail
+    {
+
+        // =====================================
+        // simple_field_layout_mixin
+        // crtp helper for leaf layouts (fields)
+        template <typename Field>
+        struct simple_field_layout_mixin
+        {
+            template <typename AlignedPtrType>
+            static AlignedPtrType transform_buffer(AlignedPtrType ptr)
+            {
+                return ptr;
+            }
+        };
+
+    } // namespace detail
+
+    // ====
+    // read
+    // ====
+
+    //===========================
+    // read_span helper types
+    //
+    namespace detail
+    {
+
+        //
+        // partial_field_access
+        //
+        template <typename PlacedAccess, typename PlacedField>
+        struct partial_field_access
+        {
+            using placed_access = PlacedAccess;
+            using placed_field = PlacedField;
+
+            static constexpr bit_range field_range = placed_field::range;
+            using access_integral_type = typename placed_access::type;
+
+            static constexpr bit_range access_range       = placed_access::range;
+            static constexpr bit_range intersection_range = intersection<placed_access::range, field_range>();
+
+            static constexpr byte_order access_endianess = placed_access::endianess;
+            static constexpr byte_order field_endianess  = placed_field::field::endianess;
+
+            static constexpr size_t post_read_shift_down
+                = (field_range.end() < access_range.end()) ? (access_range.end() - field_range.end()) : 0;
+            static constexpr size_t pre_assemble_shift_up
+                = (access_range.end() < field_range.end()) ? (field_range.end() - access_range.end()) : 0;
+
+            template <typename StageType, typename AlignedPtr>
+            static StageType read(AlignedPtr ptr)
+            {
+                return static_cast<StageType>(
+                           (conditional_swap<access_endianess != field_endianess>(placed_access::read(ptr))
+                            >> post_read_shift_down)
+                           & bit_mask<access_integral_type>(intersection_range.size()))
+                       << pre_assemble_shift_up;
+            }
+        };
+
+        //
+        // better_access
+        //
+
+        namespace impl
+        {
+            template <typename PartialAccessA, typename PartialAccessB>
+            using better_access_t = std::conditional_t<(PartialAccessA::intersection_range.size() > PartialAccessB::intersection_range.size()),
+                                                        PartialAccessA, PartialAccessB>;
+
+            //
+            // find_best_access
+            //
+            template <typename LayoutIterator, int Offset, typename PossibleAccesses, typename CurrentBest = empty_access>
+            struct find_best_access;
+
+            template <typename LayoutIterator, int Offset, typename CurrentBest>
+            struct find_best_access<LayoutIterator, Offset, meta::tlist<>, CurrentBest>
+            {
+                static_assert(!std::is_same<CurrentBest, empty_access>::value, "No matching read!");
+                using type = CurrentBest;
+                //static constexpr size_t next_offset = type::access_range::end;
+
+#ifdef NETSER_DEBUG_CONSOLE
+                static void describe()
+                {
+                    std::cout << "    ....Done. Best access size: " << type::placed_access::access::size << "("
+                              << CurrentBest::access_range::begin << "..." << CurrentBest::access_range::end << ")\n";
+                }
+#endif
+            };
+
+            template <typename LayoutIterator, int Offset, typename Access0, typename... AccessList, typename CurrentBest>
+            struct find_best_access<LayoutIterator, Offset, meta::tlist<Access0, AccessList...>, CurrentBest>
+            {
+                using call_type = find_best_access<
+                    LayoutIterator, Offset, meta::tlist<AccessList...>,
+                    better_access_t<partial_field_access<placed_memory_access<Access0, Offset, typename LayoutIterator::pointer_type>,
+                                                         meta::dereference_t<LayoutIterator>>,
+                                    CurrentBest>>;
+
+                using type = typename call_type::type;
+
+#ifdef NETSER_DEBUG_CONSOLE
+                static void describe()
+                {
+                    std::cout << "    At offset " << Offset << " checking access with size " << Access0::size << ".\n";
+                    call_type::describe();
+                }
+#endif
+            };
+
+        } // namespace impl
+
+        template <typename LayoutIterator, int Offset,
+                  typename PossibleAccessesList
+                  = filtered_accesses_t<typename LayoutIterator::pointer_type, Offset / 8, platform_memory_accesses>,
+                  typename CurrentResult = empty_access>
+        using find_best_access_t = typename impl::find_best_access<LayoutIterator, Offset, PossibleAccessesList, CurrentResult>::type;
+
+#ifdef NETSER_DEBUG_CONSOLE
+        template <typename LayoutIterator, int Offset,
+                  typename PossibleAccessesList
+                  = filtered_accesses_t<typename LayoutIterator::pointer_type, Offset / 8, platform_memory_accesses>,
+                  typename CurrentResult = empty_access>
+        void describe_find_best_access_t()
+        {
+            std::cout << "\n    Finding best access at offset " << Offset << " out of "
+                      << list_size_v<PossibleAccessesList> << " alternatives.\n";
+            impl::find_best_access<LayoutIterator, Offset, PossibleAccessesList, CurrentResult>::describe();
+        }
+#endif
+
+        namespace impl
+        {
+            template <typename LayoutIterator, typename StageType, int Offset, typename PartialFieldAccessList = meta::tlist<>,
+                      bool IsFinished = (Offset >= meta::dereference_t<LayoutIterator>::range.end())>
+            struct generate_memory_access_list_struct
+            {
+                using type = PartialFieldAccessList;
+
+#ifdef NETSER_DEBUG_CONSOLE
+                static void describe()
+                {
+                    std::cout << "Complete!\n";
+                }
+#endif
+            };
+
+            template <typename LayoutIterator, typename StageType, int Offset, typename... PartialFieldAccess>
+            struct generate_memory_access_list_struct<LayoutIterator, StageType, Offset, meta::tlist<PartialFieldAccess...>, false>
+            {
+                static constexpr size_t alignment = LayoutIterator::get_access_alignment(Offset);
+                using placed_field = meta::dereference_t<LayoutIterator>;
+
+                using access = find_best_access_t<LayoutIterator, Offset>;
+                using list = meta::tlist<PartialFieldAccess..., access>;
+                using call_type = generate_memory_access_list_struct<LayoutIterator, StageType, access::access_range.end(), list>;
+                using type = typename call_type::type;
+
+#ifdef NETSER_DEBUG_CONSOLE
+                static void describe()
+                {
+                    describe_find_best_access_t<LayoutIterator, Offset>();
+                    std::cout << "    Access (" << access::access_range.begin() << "..." << access::access_range.end() << ") \n";
+                    call_type::describe();
+                }
+#endif
+            };
+
+        } // namespace impl
+
+        template <typename LayoutIterator, typename StageType>
+        using generate_partial_memory_access_list_t =
+            typename impl::generate_memory_access_list_struct<LayoutIterator, StageType, LayoutIterator::get_offset()>::type;
+
+#ifdef NETSER_DEBUG_CONSOLE
+        template <typename LayoutIterator, typename StageType>
+        void describe_generate_partial_memory_access_list_t()
+        {
+            impl::generate_memory_access_list_struct<LayoutIterator, StageType, LayoutIterator::get_offset()>::describe();
+        }
+#endif
+
+        // ===============
+        // run_access_list
+        // runs and assembles all partial_field_access'es in a list
+        template <typename PartialFieldAccessList>
+        struct run_access_list;
+
+        template <typename... Accesses>
+        struct run_access_list<meta::tlist<Accesses...>>
+        {
+            template <typename StageType, typename AlignedPtr>
+            static NETSER_FORCE_INLINE StageType run(AlignedPtr ptr)
+            {
+                return (Accesses::template read<StageType>(ptr) | ...);
+            }
+        };
+
+    } // namespace detail
+
 
     //=============
     // write_span helper types
@@ -168,15 +389,6 @@ namespace netser
                 {
                     return execute_action::error;
                 }
-
-/*
-                return (access_written > access_size)
-                           ? execute_action::error
-                           : ((access_written == access_size)
-                                  ? ((field_written == 0) ? execute_action::write : execute_action::write_and_continue)
-                                  : ((access_written + field_size - field_written <= access_size) ? execute_action::collect_all
-                                                                                                  : execute_action::collect_partial));
-*/
             }
 
             template <typename PlacedAccess, byte_order Endianess, size_t FieldSize, size_t BitsWritten = 0, size_t FieldWritten = 0,
@@ -326,20 +538,7 @@ namespace netser
 
     } // namespace detail
 
-    template <bool Signed, size_t Bits, byte_order ByteOrder>
-    template <typename ZipIterator>
-    NETSER_FORCE_INLINE constexpr auto int_<Signed, Bits, ByteOrder>::write_span(ZipIterator it)
-    {
-        // The new implementation takes two steps to calculate the next write(s).
-        // 1. Look ahead the iterator sequence to discover what access type to use
-        // 2. Complete this write
-        // 3. If any field was not committed completely, restart at step 1.
 
-        // This happens in order to decrease the lookahead depth and the amount of data which is taken along the iterations.
-        // Involved type names get very longish very quickly, so this implementation tries to keep them as short as possible.
-
-        return detail::write_integer_algorithm::write_integer<>(it);
-    }
 
 } // namespace netser
 

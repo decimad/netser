@@ -14,13 +14,39 @@
 #include <iostream>
 #endif
 
-#include <netser/integer_shared.hpp>
-#include <netser/layout_tree.hpp>
 #include <netser/mem_access.hpp>
-#include <netser/field_mixin.hpp>
+#include <netser/field.hpp>
 
 namespace netser
 {
+
+    namespace detail
+    {
+
+        template <typename T>
+        struct decode_integer
+        {
+            static constexpr bool value = false;
+        };
+
+        template <bool Signed, size_t Bits, byte_order Endianess>
+        struct decode_integer<int_<Signed, Bits, Endianess>>
+        {
+            static constexpr bool is_signed = Signed;
+            static constexpr size_t bits = Bits;
+            static constexpr byte_order endianess = Endianess;
+
+            static constexpr bool value = true;
+        };
+
+        template <size_t Bits>
+        using auto_stage_type_t
+            = std::conditional_t<(Bits <= 8), unsigned char,
+                                 std::conditional_t<(Bits <= 16), unsigned short,
+                                                    std::conditional_t<(Bits <= 32), unsigned int,
+                                                                       std::conditional_t<(Bits <= 64), unsigned long long, meta::error_type>>>>;
+
+    } // namespace detail
 
     // Integer default mapping (If sub-byte, it must not span byte borders, if multi-byte, it must be byte-aligned)
     template <bool Signed, size_t Bits, byte_order Endianess>
@@ -98,6 +124,73 @@ namespace netser
         }
     };
 
+    template <typename Type>
+    struct is_integer : public std::false_type
+    {
+    };
+
+    template <bool Signed, size_t Bits, byte_order ByteOrder>
+    struct is_integer<int_<Signed, Bits, ByteOrder>> : public std::true_type
+    {
+    };
+
+    // true iff T is an instance of netser::int_
+    template <typename T>
+    constexpr bool is_integer_v = is_integer<T>::value;
+
+
+    template <bool Signed, size_t Bits, byte_order ByteOrder>
+    template <typename LayoutIterator>
+    constexpr typename int_<Signed, Bits, ByteOrder>::integral_type
+    int_<Signed, Bits, ByteOrder>::read(LayoutIterator layit)
+    {
+#ifdef NETSER_DEBUG_CONSOLE
+        std::cout << "Generating memory access List (";
+        std::cout << "Field size: " << meta::dereference_t<typename LayoutIterator::range>::size
+                  << " bits. Ptr-Alignment: " << layit.get_access_alignment(0) << ")... ";
+#endif
+        using accesses = detail::generate_partial_memory_access_list_t<LayoutIterator, unsigned int>;
+
+#ifdef NETSER_DEBUG_CONSOLE
+        detail::describe_generate_partial_memory_access_list_t<LayoutIterator, unsigned int>();
+        std::cout << "Got " << list_size_v<accesses> << " reads.\n";
+#endif
+        return static_cast<integral_type>(detail::template run_access_list<accesses>::template run<stage_type>(layit.get()));
+    }
+
+    template <bool Signed, size_t Bits, byte_order ByteOrder>
+    template <typename ZipIterator>
+    constexpr auto int_<Signed, Bits, ByteOrder>::read_span(ZipIterator it)
+    {
+        static_assert(!std::is_const<decltype(it.mapping())>::value, "Error!");
+        static_assert(!std::is_const<decltype(*it.mapping())>::value, "Error!");
+
+#ifdef NETSER_DEBUG_CONSOLE
+        std::cout << "reading integer span:\n";
+#endif
+        *it.mapping() = read(it.layout());
+
+#ifdef NETSER_DEBUG_CONSOLE
+        std::cout << "read span complete.\n";
+#endif
+        return ++it;
+    }
+
+    template <bool Signed, size_t Bits, byte_order ByteOrder>
+    template <typename ZipIterator>
+    NETSER_FORCE_INLINE constexpr auto int_<Signed, Bits, ByteOrder>::write_span(ZipIterator it)
+    {
+        // The new implementation takes two steps to calculate the next write(s).
+        // 1. Look ahead the iterator sequence to discover what access type to use
+        // 2. Complete this write
+        // 3. If any field was not committed completely, restart at step 1.
+
+        // This happens in order to decrease the lookahead depth and the amount of data which is taken along the iterations.
+        // Involved type names get very longish very quickly, so this implementation tries to keep them as short as possible.
+
+        return detail::write_integer_algorithm::write_integer<>(it);
+    }
+
     template <size_t Size>
     using net_uint = int_<false, Size, byte_order::be>;
 
@@ -112,11 +205,6 @@ namespace netser
     using net_uint16 = net_uint<16>;
     using net_uint32 = net_uint<32>;
 
-    static_assert(concepts::LayoutSpecifier<net_uint32>);
-
 } // namespace netser
-
-#include <netser/integer_read.hpp>
-#include <netser/integer_write.hpp>
 
 #endif

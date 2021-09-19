@@ -6,14 +6,12 @@
 #ifndef NETSER_STATIC_ARRAY_HPP__
 #define NETSER_STATIC_ARRAY_HPP__
 
-#include "netser/layout_iterator.hpp"
 #include <meta/tree.hpp>
 #include <netser/mapping.hpp>
 #include <netser/fill_random.hpp>
-#include <netser/layout_tree.hpp>
 #include <netser/read.hpp>
 #include <netser/write.hpp>
-#include <netser/field_mixin.hpp>
+#include <netser/field.hpp>
 #include <type_traits>
 
 namespace netser
@@ -109,12 +107,8 @@ namespace netser
             }
             else
             {
-                //static_assert(Size <= UnrollMax);
-
                 for (size_t i = 0; i < Size; ++i)
                 {
-                    //static_assert(std::is_array_v<decltype(it.mapping().dereference())>, "Not array type");
-
                     read_inline<layout<Field>, mapping_list<identity_member>>(
                         it.layout().get().template stride_offset<Field::size / 8, offset / 8>(i),
                         (*it.mapping())[i]

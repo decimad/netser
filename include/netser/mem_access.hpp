@@ -7,7 +7,6 @@
 #define NETSER_MEM_ACCESS_HPP__
 
 #include <netser/utility.hpp>
-#include <netser/fwd.hpp>
 #include <type_traits>
 
 namespace netser

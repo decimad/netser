@@ -7,9 +7,7 @@
 #define NETSER_READ_HPP__
 
 #include <netser/platform.hpp>
-#include <netser/layout_iterator.hpp>
-
-#include <meta/iterator.hpp>
+#include <netser/layout.hpp>
 #include <type_traits>
 
 namespace netser

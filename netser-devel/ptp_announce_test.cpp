@@ -7,36 +7,6 @@
 #include <netser/range.hpp>
 #include <string>
 
-
-//using netser::deref_t;
-//using netser::next_t;
-//using netser::type_list;
-/*
-class print_logger : public netser::dereference_logger
-{
-public:
-    void log( uintptr_t memory_location, int offset, std::string type_name, size_t type_size, size_t type_alignment ) override
-    {
-        std::cout << "Access at " << std::hex << memory_location << " (+" << offset << "): " << type_name << " (size: " << type_size << ",
-align: " << type_alignment << ")\n";
-    }
-};
-*/
-int type_list_test()
-{
-//    using range = type_list<int, short, float>;
-//
-//    static_assert(std::is_same<deref_t<range>, int>::value, "Wrong result");
-//    static_assert(std::is_same<deref_t<next_t<range>>, short>::value, "Wrong result");
-//    static_assert(std::is_same<deref_t<next_t<next_t<range>>>, float>::value, "Wrong result");
-//    static_assert(next_t<next_t<next_t<range>>>::empty(), "Wrong result");
-//
-//    netser::deref_t<range::begin> begin_val;
-//    netser::deref_t<netser::next_t<range>> second_val;
-
-    return 0;
-}
-
 template <typename T>
 struct print_typeid
 {
@@ -93,7 +63,10 @@ struct PortIdentity
 };
 
 // PortIdentity
-using port_identity_zipped = netser::zipped<netser::auto_zipped_member<&PortIdentity::clock>, net_uint<16>, mem<&PortIdentity::port>>;
+using port_identity_zipped = netser::zipped<
+    netser::auto_zipped_member<&PortIdentity::clock>,
+    net_uint<16>, mem<&PortIdentity::port>
+>;
 
 port_identity_zipped default_zipped(PortIdentity);
 
@@ -119,8 +92,8 @@ struct Header
         FrequencyTraceable = 32
     };
 
-    PortIdentity source_port_identity;
     int64 correction_field;
+    PortIdentity source_port_identity;
     uint16 message_length;
     uint16 sequence_id;
     uint8 transport_specific;
@@ -265,30 +238,3 @@ int main()
     make_aligned_ptr<4, 0, 34>(buffer) << announce;
 }
 
-/*
-LeafNode<
-    netser::layout<
-        netser::int_<false, 4, netser::byte_order::big_endian>,
-        netser::int_<false, 4, netser::byte_order::big_endian>,
-        netser::int_<false, 4, netser::byte_order::big_endian>,
-        netser::int_<false, 4, netser::byte_order::big_endian>,
-        netser::int_<false, 16, netser::byte_order::big_endian>,
-        netser::int_<false, 8, netser::byte_order::big_endian>,
-        netser::int_<false, 8, netser::byte_order::big_endian>,
-        netser::int_<false, 8, netser::byte_order::big_endian>,
-        netser::int_<false, 8, netser::byte_order::big_endian>,
-        netser::int_<false, 64, netser::byte_order::big_endian>,
-        netser::int_<false, 32, netser::byte_order::big_endian>,
-        netser::layout<
-            netser::layout<
-                netser::int_<false, 8, netser::byte_order::big_endian> [8]
-            >,
-            netser::int_<false, 16, netser::byte_order::big_endian>
-        >,
-        netser::int_<false, 16, netser::byte_order::big_endian>,
-        netser::int_<false, 8, netser::byte_order::big_endian>,
-        netser::int_<true, 8, netser::byte_order::big_endian>
-    >,
-    netser::layout_tree_ctx
->
-*/

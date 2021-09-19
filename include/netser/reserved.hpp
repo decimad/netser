@@ -1,7 +1,7 @@
 #ifndef NETSER_RESERVED_HPP___
 #define NETSER_RESERVED_HPP___
 
-#include "netser/fwd.hpp"
+#include "layout.hpp"
 
 namespace netser {
 

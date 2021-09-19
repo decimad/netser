@@ -61,19 +61,6 @@ namespace netser
         return value == 0 ? 1 : ((value % 2 == 0) ? 2 * power2_alignment_of(value / 2) : 1);
     }
 
-    /*
-    inline void test_remainder() {
-
-        using type = residue_class< 4, 2 >;
-
-        constexpr size_t alignment = type::alignment();
-        constexpr size_t off       = type::offset_class<53>::remainder; //offset_alignment(53);
-
-        constexpr int aligned   = type::align_down(2, 4);
-
-    }
-    */
-
 } // namespace netser
 
 #endif

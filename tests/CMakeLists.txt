@@ -8,9 +8,11 @@
 function(add_gtest_test target)
     add_executable(${target} ${ARGN})
     target_link_libraries(${target} ${GTEST_BOTH_LIBRARIES})
-    include_directories( ../include )
+    target_include_directories(${target} PRIVATE ../include ../../meta)
+
     set_target_properties(${target} PROPERTIES FOLDER tests)
     add_test(${target} ${target})
+    set_property(TARGET ${target} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endfunction()
 
 add_gtest_test( integer-read  integer-read.cpp )

@@ -9,6 +9,9 @@
 #include <netser/platform.hpp>
 #include <netser/layout_iterator.hpp>
 
+#include <meta/iterator.hpp>
+#include <type_traits>
+
 namespace netser
 {
 
@@ -20,8 +23,8 @@ namespace netser
         {
             static NETSER_FORCE_INLINE auto read(ZipIterator it)
             {
-                using type = decltype(deref_t<typename ZipIterator::layout_iterator::ct_iterator>::field::read_span(it));
-                auto result = deref_t<typename ZipIterator::layout_iterator::ct_iterator>::field::read_span(it);
+                using type = decltype(meta::dereference_t<typename ZipIterator::layout_iterator::range>::read_span(it));
+                auto result = meta::dereference_t<typename ZipIterator::layout_iterator::range>::read_span(it);
                 return read_zip_iterator_struct<type>::read(result);
             }
         };
@@ -31,9 +34,9 @@ namespace netser
         {
             static NETSER_FORCE_INLINE auto read(ZipIterator it)
             {
-                static_assert(ZipIterator::layout_iterator::ct_iterator::offset % 8 == 0, "Must!");
+                static_assert(offset_v<typename ZipIterator::layout_iterator::range> % 8 == 0, "Must!");
                 // return a pointer one behind the last field (for continuation)
-                return it.layout().get().template static_offset<int(ZipIterator::layout_iterator::ct_iterator::offset) / 8>();
+                return it.layout().get().template static_offset<int(offset_v<typename ZipIterator::layout_iterator::range>) / 8>();
             }
         };
 
@@ -45,6 +48,31 @@ namespace netser
             return read_zip_iterator_struct<ZipIterator>::read(it);
         }
 
+
+        // Discussion:
+        // - Is it worth it to define a zip-iterator?
+        //   Yes - this way a single return type can define both the state of the layout as well as of the mapping range.
+        // - Is it worth it to wrap the pointer into a runtime zip iterator?
+        //   Yes, because this way the return value of a typed read operation can be fed into the generic read function, providing all
+        //   necessary information in one object/type.
+
+        template<meta::concepts::Enumerator LayoutRange, meta::concepts::Enumerator MappingRange, typename AlignedPtr, typename Dest>
+        NETSER_FORCE_INLINE auto read_range_span(AlignedPtr src, Dest& destination)
+        {
+            return read_range_span_typed<LayoutRange, MappingRange>(src, destination);
+        }
+
+        template <meta::concepts::Enumerator LayoutRange, meta::concepts::Enumerator MappingRange, typename AlignedPtr, typename Dest>
+        NETSER_FORCE_INLINE auto read_range(AlignedPtr src, Dest& destination)
+        {
+            return read_range( read_range_span(src, destination) );
+        }
+
+        template<meta::concepts::Sentinel LayoutRange, meta::concepts::Sentinel MappingRange, typename AlignedPtr, typename Dest>
+        NETSER_FORCE_INLINE void read_range(AlignedPtr src [[maybe_unused]], Dest& destination [[maybe_unused]])
+        {
+        }
+
     } // namespace detail
 
     // read< Layout, Mapping >( source : aligned_ptr<>, dest : Dest& )
@@ -54,7 +82,11 @@ namespace netser
     void read(AlignedPtr ptr, Arg &&dest)
     {
         detail::read_zip_iterator(
-            make_zip_iterator(make_layout_iterator<Layout>(ptr), make_mapping_iterator<Mapping>(std::forward<Arg>(dest))));
+            make_zip_iterator(
+                make_layout_iterator<Layout>(ptr),
+                make_mapping_iterator<Mapping>(std::forward<Arg>(dest))
+                )
+            );
     }
 
     // read< Layout, Mapping >( source : aligned_ptr<>, dest : Dest& )
@@ -64,7 +96,11 @@ namespace netser
     NETSER_FORCE_INLINE auto read_inline(AlignedPtr ptr, Arg &&dest)
     {
         return detail::read_zip_iterator(
-            make_zip_iterator(make_layout_iterator<Layout>(ptr), make_mapping_iterator<Mapping>(std::forward<Arg>(dest))));
+            make_zip_iterator(
+                make_layout_iterator<Layout>(ptr),
+                make_mapping_iterator<Mapping>(std::forward<Arg>(dest))
+                )
+            );
     }
 
 } // namespace netser

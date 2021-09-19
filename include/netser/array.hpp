@@ -6,12 +6,15 @@
 #ifndef NETSER_STATIC_ARRAY_HPP__
 #define NETSER_STATIC_ARRAY_HPP__
 
+#include "netser/layout_iterator.hpp"
+#include <meta/tree.hpp>
 #include <netser/mapping.hpp>
 #include <netser/fill_random.hpp>
-#include <netser/layout_node.hpp>
+#include <netser/layout_tree.hpp>
 #include <netser/read.hpp>
 #include <netser/write.hpp>
 #include <netser/field_mixin.hpp>
+#include <type_traits>
 
 namespace netser
 {
@@ -26,7 +29,9 @@ namespace netser
             {
                 constexpr size_t offset = ZipIterator::layout_iterator::get_offset();
                 read_inline<layout<Field>, mapping_list<identity_member>>(
-                    it.layout().get().template stride_offset<Field::size / 8, offset / 8>(Index), it.mapping().dereference()[Index]);
+                    it.layout().get().template stride_offset<Field::size / 8, offset / 8>(Index),
+                    it.mapping().dereference()[Index]
+                );
                 return unroll<Index + 1, End, Field>::template read(it);
             }
 
@@ -35,7 +40,9 @@ namespace netser
             {
                 constexpr size_t offset = ZipIterator::layout_iterator::get_offset();
                 write_inline<layout<Field>, mapping_list<identity_member>>(
-                    it.layout().get().template stride_offset<Field::size / 8, offset / 8>(Index), it.mapping().dereference()[Index]);
+                    it.layout().get().template stride_offset<Field::size / 8, offset / 8>(Index),
+                    it.mapping().dereference()[Index]
+                );
                 return unroll<Index + 1, End, Field>::template write(it);
             }
         };
@@ -66,8 +73,15 @@ namespace netser
     {
         static_assert(Field::size % 8 == 0, "Unsupported Array Element Stride!");
 
-        static constexpr size_t count = 1;
+        //static constexpr size_t count = 1;
         static constexpr size_t size = Field::size * Size;
+
+        // iterator2 {
+        static constexpr size_t num_children = (Size <= UnrollMax) ? Size : 0;  // Outer algorithm will unroll us
+        template<size_t Pos>
+        using get_child = Field;
+        // iterator2 }
+
 
         struct identity_mapping
         {
@@ -89,16 +103,22 @@ namespace netser
             constexpr size_t offset = ZipIterator::layout_iterator::get_offset();
             static_assert(ZipIterator::layout_iterator::get_offset() % 8 == 0, "Arrays must be aligned to byte boundaries.");
 
-            if (Size <= UnrollMax)
+            if constexpr (Size <= UnrollMax)
             {
                 return detail::unroll<0, Size, Field>::template read(it);
             }
             else
             {
+                //static_assert(Size <= UnrollMax);
+
                 for (size_t i = 0; i < Size; ++i)
                 {
+                    //static_assert(std::is_array_v<decltype(it.mapping().dereference())>, "Not array type");
+
                     read_inline<layout<Field>, mapping_list<identity_member>>(
-                        it.layout().get().template stride_offset<Field::size / 8, offset / 8>(i), it.mapping().dereference()[i]);
+                        it.layout().get().template stride_offset<Field::size / 8, offset / 8>(i),
+                        it.mapping().dereference()[i]
+                    );
                 }
 
                 return it.advance();
@@ -111,7 +131,7 @@ namespace netser
             constexpr size_t offset = ZipIterator::layout_iterator::get_offset();
             static_assert(offset % 8 == 0, "Arrays must be aligned to byte boundaries.");
 
-            if (Size <= UnrollMax)
+            if constexpr (Size <= UnrollMax)
             {
                 return detail::unroll<0, Size, Field>::template write(it);
             }
@@ -120,7 +140,9 @@ namespace netser
                 for (size_t i = 0; i < Size; ++i)
                 {
                     write_inline<layout<Field>, mapping_list<identity_member>>(
-                        it.layout().get().template stride_offset<Field::size / 8, offset / 8>(i), it.mapping().dereference()[i]);
+                        it.layout().get().template stride_offset<Field::size / 8, offset / 8>(i),
+                        it.mapping().dereference()[i]
+                    );
                 }
 
                 return it.advance();
@@ -133,8 +155,9 @@ namespace netser
         {
             for (size_t i = 0; i < Size; ++i)
             {
-                ::netser::fill_mapping_random<typename layout<Field>::begin>(
-                    make_mapping_iterator<mapping_list<identity_member>>(it.dereference()[i]), std::forward<Generator>(generator));
+                ::netser::fill_mapping_random<layout_enumerator_t<layout<Field>>>(
+                    make_mapping_iterator<mapping_list<identity_member>>(it.dereference()[i]), std::forward<Generator>(generator)
+                );
             }
         }
     };

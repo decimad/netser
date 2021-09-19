@@ -22,7 +22,7 @@ namespace netser
 #ifdef NETSER_DEBUG_CONSOLE
                 std::cout << "Writing span:\n";
 #endif
-                auto result = deref_t<typename decltype(it.layout())::ct_iterator>::field::write_span(it);
+                auto result = meta::dereference_t<typename ZipIterator::layout_iterator>::field::write_span(it);
 
 #ifdef NETSER_DEBUG_CONSOLE
                 std::cout << "Span written.\n";
@@ -36,7 +36,7 @@ namespace netser
         {
             static NETSER_FORCE_INLINE auto write(ZipIterator it)
             {
-                return it.layout().get().template static_offset<int(ZipIterator::layout_iterator::ct_iterator::offset)>();
+                return it.layout().get().template static_offset<int(offset_v<typename ZipIterator::layout_iterator::range>)>();
             }
         };
 

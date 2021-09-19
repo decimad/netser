@@ -6,7 +6,6 @@
 #ifndef NETSER_UTILITY_HPP__
 #define NETSER_UTILITY_HPP__
 
-#include "netser/utility.hpp"
 #include <meta/tlist.hpp>
 #include <meta/util.hpp>
 #include <type_traits>

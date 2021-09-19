@@ -1,40 +1,27 @@
 
-include_directories( ../include )
-include_directories( ../netser-devel )
+add_executable(netser-devel baby_test.cpp ptp_announce_test.cpp)
 
-set( NETSER_HEADERS
-    ../include/netser/aligned_ptr.hpp
-    ../include/netser/fwd.hpp
-    ../include/netser/integer.hpp
-	../include/netser/integer_read.hpp
-	../include/netser/integer_write.hpp
-	../include/netser/integer_shared.hpp
-    ../include/netser/layout.hpp
-	../include/netser/layout_iterator.hpp
-    ../include/netser/layout_fields.hpp
-    ../include/netser/mapping.hpp
-    ../include/netser/mem_access.hpp
-    ../include/netser/platform_generic.hpp
-    ../include/netser/remainder.hpp
-    ../include/netser/static_array.hpp
-    ../include/netser/type_list.hpp
-    ../include/netser/utility.hpp
-    ../include/netser/zip_iterator.hpp
-    ../include/netser/zipped.hpp
-	../include/netser/read.hpp
-	../include/netser/write.hpp
-	../include/netser/fill_random.hpp
-    ../include/netser/netser.hpp
+target_include_directories(netser-devel PRIVATE ../include )
+target_include_directories(netser-devel PRIVATE ../netser-devel )
+
+target_include_directories(netser-devel PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../meta)
+
+target_compile_options(netser-devel PRIVATE -std=gnu++20)
+target_compile_options(netser-devel
+    PRIVATE
+        -mcpu=cortex-m7
+        -mthumb
+        -mfloat-abi=hard
+        -mfpu=fpv5-d16
 )
 
-source_group(netser FILES ${NETSER_HEADERS})
-
-set( NETSER_DEVEL_FILES
-    main.cpp
-    merge_sort.hpp
+target_link_options(netser-devel PRIVATE
+    -mcpu=cortex-m7
+    -mthumb
+    -mfloat-abi=hard
+    -mfpu=fpv5-d16
 )
 
-source_group(source FILES ${NETSER_DEVEL_FILES})
-
-add_executable(netser-devel main.cpp ${NETSER_HEADERS} ${NETSER_DEVEL_FILES})
-
+add_custom_command(TARGET netser-devel POST_BUILD
+    COMMAND arm-none-eabi-objdump -D $<TARGET_FILE:netser-devel> > disassembly.txt
+)

@@ -1,0 +1,12 @@
+[
+{
+  "directory": "H:/projects/personal/ptpclient/system/netser/build",
+  "command": "H:\\projects\\install\\arm-embedded-gcc\\10-2021-07\\bin\\arm-none-eabi-g++.exe -I../netser-devel/../include -I../netser-devel/../netser-devel -I../netser-devel/../../meta -O3 -DNDEBUG -std=gnu++20 -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16 -o netser-devel\\CMakeFiles\\netser-devel.dir\\baby_test.cpp.obj -c H:\\projects\\personal\\ptpclient\\system\\netser\\netser-devel\\baby_test.cpp",
+  "file": "H:/projects/personal/ptpclient/system/netser/netser-devel/baby_test.cpp"
+},
+{
+  "directory": "H:/projects/personal/ptpclient/system/netser/build",
+  "command": "H:\\projects\\install\\arm-embedded-gcc\\10-2021-07\\bin\\arm-none-eabi-g++.exe -I../netser-devel/../include -I../netser-devel/../netser-devel -I../netser-devel/../../meta -O3 -DNDEBUG -std=gnu++20 -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16 -o netser-devel\\CMakeFiles\\netser-devel.dir\\ptp_announce_test.cpp.obj -c H:\\projects\\personal\\ptpclient\\system\\netser\\netser-devel\\ptp_announce_test.cpp",
+  "file": "H:/projects/personal/ptpclient/system/netser/netser-devel/ptp_announce_test.cpp"
+}
+]

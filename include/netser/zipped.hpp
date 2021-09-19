@@ -10,7 +10,7 @@
 #include <meta/tlist.hpp>
 #include <netser/integer.hpp>
 #include <netser/reserved.hpp>
-#include <netser/layout_node.hpp>
+#include <netser/layout_tree.hpp>
 #include <netser/layout_iterator.hpp>
 #include <netser/mapping.hpp>
 #include <netser/layout.hpp>
@@ -178,7 +178,7 @@ namespace netser
     void fill_random(T &&arg)
     {
         using zipped_type = decltype(default_zipped(arg));
-        using layout_type = typename zipped_type::layout::begin;
+        using layout_type = layout_enumerator_t<typename zipped_type::layout>;
         using mapping_type = typename zipped_type::mapping;
 
         auto it = make_mapping_iterator<mapping_type>(arg);

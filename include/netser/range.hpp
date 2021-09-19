@@ -9,9 +9,12 @@
 #include "meta/common.hpp"
 #include "netser/utility.hpp"
 #include <meta/tlist.hpp>
+#include <meta/range.hpp>
+
 
 namespace netser
 {
+    /*
 
     // compile-time
     namespace ct
@@ -209,21 +212,102 @@ namespace netser
 
     } // namespace ct
 
+    */
+
     // while_
     //
     //
-    template <typename Range, template <typename> class Condition, template <typename, typename> class Body, typename State,
-              bool Finish = Range::empty()>
+    template <meta::concepts::Enumerator Range, template <typename> class Condition, template <typename, typename> class Body, typename State>
     struct while_;
 
     namespace detail
     {
 
+/*
+[build] ../netser-devel/../../meta/meta/iterator.hpp:38:17:   required for the satisfaction of 'ValidIterator<Iter>'
+[with Iter =
+    meta::iterator_range<
+        netser::layout_meta_iterator<
+            meta::tree_iterator<
+                netser::layout_tree_ctx,
+                meta::tlist<
+                    netser::int_<false, 32, netser::byte_order::big_endian>,
+                    meta::detail::SE<
+                        netser::layout<
+                            netser::int_<false, 4, netser::byte_order::big_endian>,
+                            netser::int_<false, 4, netser::byte_order::big_endian>,
+                            netser::int_<false, 4, netser::byte_order::big_endian>,
+                            netser::int_<false, 4, netser::byte_order::big_endian>,
+                            netser::int_<false, 16, netser::byte_order::big_endian>,
+                            netser::int_<false, 8, netser::byte_order::big_endian>,
+                            netser::int_<false, 8, netser::byte_order::big_endian>,
+                            netser::int_<false, 8, netser::byte_order::big_endian>,
+                            netser::int_<false, 8, netser::byte_order::big_endian>,
+                            netser::int_<false, 64, netser::byte_order::big_endian>,
+                            netser::int_<false, 32, netser::byte_order::big_endian>,
+                            netser::layout<
+                                netser::layout<
+                                    netser::int_<false, 8, netser::byte_order::big_endian>[8]
+                                >,
+                                netser::int_<false, 16, netser::byte_order::big_endian>
+                            >,
+                            netser::int_<false, 16, netser::byte_order::big_endian>,
+                            netser::int_<false, 8, netser::byte_order::big_endian>,
+                            netser::int_<true, 8, netser::byte_order::big_endian>
+                        >,
+                        10
+                    >
+                >,
+                meta::traversals::lr
+            >,
+            128
+        >,
+        netser::layout_meta_iterator<
+            meta::sentinel<
+                meta::tree_iterator<
+                    netser::layout_tree_ctx,
+                    meta::tlist<
+                        netser::int_<true, 8, netser::byte_order::big_endian>,
+                        meta::detail::SE<
+                            netser::layout<
+                                netser::int_<false, 4, netser::byte_order::big_endian>,
+                                netser::int_<false, 4, netser::byte_order::big_endian>,
+                                netser::int_<false, 4, netser::byte_order::big_endian>,
+                                netser::int_<false, 4, netser::byte_order::big_endian>,
+                                netser::int_<false, 16, netser::byte_order::big_endian>,
+                                netser::int_<false, 8, netser::byte_order::big_endian>,
+                                netser::int_<false, 8, netser::byte_order::big_endian>,
+                                netser::int_<false, 8, netser::byte_order::big_endian>,
+                                netser::int_<false, 8, netser::byte_order::big_endian>,
+                                netser::int_<false, 64, netser::byte_order::big_endian>,
+                                netser::int_<false, 32, netser::byte_order::big_endian>,
+                                netser::layout<
+                                    netser::layout<
+                                        netser::int_<false, 8, netser::byte_order::big_endian>[8]
+                                    >,
+                                    netser::int_<false, 16, netser::byte_order::big_endian>
+                                >,
+                                netser::int_<false, 16, netser::byte_order::big_endian>,
+                                netser::int_<false, 8, netser::byte_order::big_endian>,
+                                netser::int_<true, 8, netser::byte_order::big_endian>
+                            >,
+                            14
+                        >
+                    >,
+                    meta::traversals::lr
+                >
+            >,
+            0
+        >
+    >]
+*/
+
+
         template <typename Range, template <typename> class Condition, template <typename, typename> class Body, typename State,
-                  bool Finish = !Condition<deref_t<Range>>::value>
+                  bool Finish = !Condition<meta::dereference_t<Range>>::value>
         struct while_inner
         {
-            using type = typename while_<next_t<Range>, Condition, Body, typename Body<deref_t<Range>, State>::type>::type;
+            using type = typename while_<meta::advance_t<Range>, Condition, Body, typename Body<meta::dereference_t<Range>, State>::type>::type;
         };
 
         template <typename Range, template <typename> class Condition, template <typename, typename> class Body, typename State>
@@ -234,14 +318,14 @@ namespace netser
 
     } // namespace detail
 
-    template <typename Range, template <typename> class Condition, template <typename, typename> class Body, typename State, bool Finish>
+    template <meta::concepts::Enumerator Range, template <typename> class Condition, template <typename, typename> class Body, typename State>
     struct while_
     {
         using type = typename detail::while_inner<Range, Condition, Body, State>::type;
     };
 
-    template <typename Range, template <typename> class Condition, template <typename, typename> class Body, typename State>
-    struct while_<Range, Condition, Body, State, true>
+    template <meta::concepts::Sentinel Range, template <typename> class Condition, template <typename, typename> class Body, typename State>
+    struct while_<Range, Condition, Body, State>
     {
         using type = State;
     };

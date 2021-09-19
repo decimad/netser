@@ -54,7 +54,7 @@ namespace netser
         template <typename CtRange>
         using discover_write_span_size =
             typename while_<CtRange,
-                            is_endianess_integer_field<deref_t<CtRange>::endianess>::template condition, // take the endianess of
+                            is_endianess_integer_field<meta::dereference_t<CtRange>::field::endianess>::template condition, // take the endianess of
                                                                                                                   // the first element.
                             discover_write_span_size_body, std::integral_constant<size_t, 0>>::type;
 
@@ -87,8 +87,8 @@ namespace netser
         template <typename CtLayoutIterator, typename AccessList, size_t SpanSize, size_t FieldWrittenBits, size_t CollectedBits>
         struct discover_switch<CtLayoutIterator, AccessList, SpanSize, FieldWrittenBits, CollectedBits, discover_case::add_field>
         {
-            using type = typename discover_access<next_t<CtLayoutIterator>, AccessList, SpanSize, 0,
-                                                  CollectedBits + deref_t<CtLayoutIterator>::size - FieldWrittenBits>::type;
+            using type = typename discover_access<meta::advance_t<CtLayoutIterator>, AccessList, SpanSize, 0,
+                                                  CollectedBits + meta::dereference_t<CtLayoutIterator>::size - FieldWrittenBits>::type;
         };
 
         template <typename CtLayoutIterator, typename AccessList, size_t SpanSize, size_t FieldWrittenBits, size_t CollectedBits>
@@ -111,11 +111,11 @@ namespace netser
         struct discover_access
         {
             static_assert(!meta::type_list::is_empty<AccessList>, "No access possible.");
-            static_assert(!CtLayoutIterator::is_end, "Could not get enough fields");
+            static_assert(!meta::concepts::EmptyRange<CtLayoutIterator>, "Could not get enough fields");
             static_assert(!is_integer_v<CtLayoutIterator>, "No integer field");
 
             using write = meta::type_list::front<AccessList>;
-            using field = deref_t<CtLayoutIterator>; // => placed_field
+            using field = meta::dereference_t<CtLayoutIterator>; // => placed_field
 
             static constexpr size_t field_remaining_bits = field::size - FieldWrittenBits;
 
@@ -293,8 +293,8 @@ namespace netser
             NETSER_FORCE_INLINE static auto write_integer(ZipIterator it)
             {
                 using layout_iterator = typename ZipIterator::layout_iterator;
-                using layout_iterator_ct = typename layout_iterator::ct_iterator;
-                using placed_field = deref_t<layout_iterator_ct>;
+                using layout_iterator_ct = typename layout_iterator::range;
+                using placed_field = meta::dereference_t<layout_iterator_ct>;
                 using field = typename placed_field::field;
                 using ptr_type = typename layout_iterator::pointer_type;
                 constexpr size_t span_size = detail::discover_write_span_size<layout_iterator_ct>::value - FieldWritten;

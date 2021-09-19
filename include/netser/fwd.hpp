@@ -8,7 +8,7 @@
 
 #include <cstddef>
 #include <type_traits>
-#include "layout_node.hpp"
+#include "layout_tree.hpp"
 
 namespace netser
 {

@@ -13,15 +13,14 @@
 #include <netser/utility.hpp>
 #include <netser/zip_iterator.hpp>
 #include <netser/layout_iterator.hpp>
-#include <netser/layout_node.hpp>
+#include <netser/layout_tree.hpp>
+#include <meta/tree.hpp>
 #include <type_traits>
 
 namespace netser
 {
-    template <typename T, size_t Size, size_t UnrollMax = 8>
+    template <typename T, size_t Size, size_t UnrollMax = 7>
     struct array_layout;
-
-
 
     namespace detail {
 
@@ -48,58 +47,12 @@ namespace netser
         using transformed_list = meta::type_list::transform<meta::tlist<Layouts...>, detail::layout_transformer>;
 
       public:
-        static constexpr size_t count = detail::count_fields_size_struct<transformed_list>::count;
-        static constexpr size_t size = detail::count_fields_size_struct<transformed_list>::size;
+        template<size_t Pos>
+        using get_child = meta::type_list::get<transformed_list, Pos>;
 
-        //
-        // Get nth field
-        //
-      private:
-        template <size_t Index, size_t IndexOffset, size_t BitOffset, typename LayoutList>
-        struct get_field_struct
-        {
-        };
-
-        template <size_t Index, size_t IndexOffset, size_t BitOffset, typename Layout0, typename... LayoutsTail>
-        struct get_field_struct<Index, IndexOffset, BitOffset, meta::tlist<Layout0, LayoutsTail...>>
-            : public std::conditional_t<
-                  (Index < IndexOffset + Layout0::count), typename Layout0::template get_field<Index - IndexOffset, BitOffset>,
-                  get_field_struct<Index, IndexOffset + Layout0::count, BitOffset + Layout0::size, meta::tlist<LayoutsTail...>>>
-        {
-        };
-
-      private:
-        template <typename LayoutList>
-        struct pop_struct
-        {
-            using result = meta::error_type;
-        };
-
-        template <typename Type0, typename... Types>
-        struct pop_struct<meta::tlist<Type0, Types...>>
-        {
-            using child_pop_result = typename Type0::pop;
-            using result = std::conditional_t<
-                child_pop_result::tail_empty,
-                // Type0 is empty after this pop
-                detail::layout_pop_result<typename child_pop_result::field, layout<Types...>>,
-                // Type0 has still elements remaining after this pop
-                detail::layout_pop_result<typename child_pop_result::field, layout<typename child_pop_result::tail_layout, Types...>>>;
-        };
-
-        // Pop field
-      public:
-        using pop = typename pop_struct<transformed_list>::result;
-
-        // Iterator sequence
-      public:
-        using begin = layout_iterator_ct<layout>;
-        using end = layout_iterator_ct<layout<>, size, 0>;
+        static constexpr size_t num_children = meta::type_list::size<transformed_list>;
 
       public:
-        template <size_t Index, size_t BitOffset = 0>
-        using get_field = get_field_struct<Index, 0, BitOffset, transformed_list>;
-
         template <size_t SourceAlignment, size_t Index, size_t Offset>
         auto read(const void *src);
 

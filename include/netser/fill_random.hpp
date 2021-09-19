@@ -6,12 +6,13 @@
 #ifndef NETSER_RANDOM_INIT_HPP__
 #define NETSER_RANDOM_INIT_HPP__
 
+#include <meta/range.hpp>
 #include <netser/utility.hpp>
 #include <netser/zip_iterator.hpp>
 #include <random>
 
 // Utility algo to fill a given layout+mapping pair with random values inside the value range of the layout fields.
-// This is handy during debugging because roundtrip tests for equality can only work if the layout is able to store the values of the
+// This is useful during debugging because roundtrip tests for equality can only work if the layout is able to store the values of the
 // mapping.
 //
 namespace netser
@@ -20,15 +21,15 @@ namespace netser
     namespace detail
     {
 
-        template <typename LayoutIterator, typename MappingIterator, bool IsEnd = LayoutIterator::is_end || MappingIterator::is_end>
+        template <typename LayoutIterator, typename MappingIterator, bool IsEnd = meta::concepts::EmptyRange<LayoutIterator> || MappingIterator::is_end>
         struct fill_random
         {
             template <typename Generator>
             static void _(MappingIterator it, Generator &&generator)
             {
-                deref_t<LayoutIterator>::field::template fill_random(it, generator);
+                meta::dereference_t<LayoutIterator>::field::template fill_random(it, generator);
                 using next_type = decltype(it.advance());
-                return fill_random<next_t<LayoutIterator>, next_type>::template _(it.advance(), std::forward<Generator>(generator));
+                return fill_random<meta::advance_t<LayoutIterator>, next_type>::template _(it.advance(), std::forward<Generator>(generator));
             }
         };
 

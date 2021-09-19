@@ -77,7 +77,7 @@ namespace netser
             {
                 static_assert(!std::is_same<CurrentBest, empty_access>::value, "No matching read!");
                 using type = CurrentBest;
-                static constexpr size_t next_offset = type::access_range::end;
+                //static constexpr size_t next_offset = type::access_range::end;
 
 #ifdef NETSER_DEBUG_CONSOLE
                 static void describe()
@@ -94,7 +94,7 @@ namespace netser
                 using call_type = find_best_access<
                     LayoutIterator, Offset, meta::tlist<AccessList...>,
                     better_access_t<partial_field_access<placed_memory_access<Access0, Offset, typename LayoutIterator::pointer_type>,
-                                                         deref_t<LayoutIterator>>,
+                                                         meta::dereference_t<LayoutIterator>>,
                                     CurrentBest>>;
 
                 using type = typename call_type::type;
@@ -131,9 +131,8 @@ namespace netser
 
         namespace impl
         {
-
             template <typename LayoutIterator, typename StageType, int Offset, typename PartialFieldAccessList = meta::tlist<>,
-                      bool IsFinished = (Offset >= deref_t<LayoutIterator>::range.end())>
+                      bool IsFinished = (Offset >= meta::dereference_t<LayoutIterator>::range.end())>
             struct generate_memory_access_list_struct
             {
                 using type = PartialFieldAccessList;
@@ -150,7 +149,7 @@ namespace netser
             struct generate_memory_access_list_struct<LayoutIterator, StageType, Offset, meta::tlist<PartialFieldAccess...>, false>
             {
                 static constexpr size_t alignment = LayoutIterator::get_access_alignment(Offset);
-                using placed_field = deref_t<LayoutIterator>;
+                using placed_field = meta::dereference_t<LayoutIterator>;
 
                 using access = find_best_access_t<LayoutIterator, Offset>;
                 using list = meta::tlist<PartialFieldAccess..., access>;
@@ -218,11 +217,12 @@ namespace netser
 
     template <bool Signed, size_t Bits, byte_order ByteOrder>
     template <typename LayoutIterator>
-    constexpr typename int_<Signed, Bits, ByteOrder>::integral_type int_<Signed, Bits, ByteOrder>::read(LayoutIterator layit)
+    constexpr typename int_<Signed, Bits, ByteOrder>::integral_type
+    int_<Signed, Bits, ByteOrder>::read(LayoutIterator layit)
     {
 #ifdef NETSER_DEBUG_CONSOLE
         std::cout << "Generating memory access List (";
-        std::cout << "Field size: " << deref_t<typename LayoutIterator::ct_iterator>::size
+        std::cout << "Field size: " << meta::dereference_t<LayoutIterator>::size
                   << " bits. Ptr-Alignment: " << layit.get_access_alignment(0) << ")... ";
 #endif
         using accesses = detail::generate_partial_memory_access_list_t<LayoutIterator, unsigned int>;

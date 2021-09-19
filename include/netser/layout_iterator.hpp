@@ -6,22 +6,17 @@
 #ifndef NETSER_LAYOUT_ITERATOR_HPP__
 #define NETSER_LAYOUT_ITERATOR_HPP__
 
+#include <meta/tlist.hpp>
+#include <netser/layout_tree.hpp>
 #include <netser/utility.hpp>
+#include <type_traits>
+#include <utility>
 
 namespace netser
 {
-
-    //
-    // layout_iterator_ct
-    // Depth-first layout leaf (compile-time) iterator.
-    //    ::dereference -> layout_sequence_value_type
-    //    ::advance     -> next leaf as in depth first left before right order.
-    template <typename Layout, size_t Offset = 0, size_t FieldCount = Layout::count>
-    struct layout_iterator_ct;
-
     namespace detail
     {
-
+/*
         template <typename Field, size_t Offset>
         struct placed_field : public Field
         {
@@ -30,6 +25,7 @@ namespace netser
             // static constexpr size_t size = field::size;
             static constexpr bit_range range = make_bit_range<offset, offset + field::size>();
         };
+*/
 
         namespace impl
         {
@@ -45,34 +41,6 @@ namespace netser
         template <typename T>
         using is_placed_field = decltype(impl::is_placed_field_func(std::declval<T>()));
 
-        // TODO: -> detail
-        /*
-        template <typename Field, size_t Offset, typename SegmentRange>
-        struct placed_field_segment : public placed_field<Field, Offset>
-        {
-            static_assert(SegmentRange::begin <= Field::size && SegmentRange::end <= Field::size, "Bad field segment!");
-            using segment_range = SegmentRange;
-        };
-        */
-    } // namespace detail
-
-    namespace detail
-    {
-
-        namespace impl
-        {
-
-            template <typename Layout, size_t Offset, size_t FieldCount>
-            std::true_type is_layout_iterator_ct_struct(layout_iterator_ct<Layout, Offset, FieldCount>);
-
-            template <typename T>
-            std::false_type is_layout_iterator_ct_struct(T);
-
-        } // namespace impl
-
-        template <typename T>
-        using is_layout_iterator_ct = decltype(impl::is_layout_iterator_ct_struct(std::declval<T>()));
-
     } // namespace detail
 
     // layout_sequence_value_type
@@ -82,69 +50,45 @@ namespace netser
     template <typename Field, size_t Offset>
     using layout_sequence_value_type = detail::placed_field<Field, Offset>;
 
-    //
-    // layout_iterator_ct
-    // documentation see forward declaration
-    //
-    template <typename Layout, size_t Offset, size_t FieldCount /* = Layout::count */>
-    struct layout_iterator_ct
-    {
-      private:
-        using pop_result = typename Layout::pop;
-        using field = typename pop_result::field;
-
-      public:
-        using dereference = layout_sequence_value_type<field, Offset>;
-        using advance = layout_iterator_ct<typename pop_result::tail_layout, field::template next_offset<Offset>::value>;
-
-        static constexpr size_t offset = Offset;
-
-        static constexpr bool is_end = false;
-        static constexpr bool empty()
-        {
-            return false;
-        }
-    };
-
-    template <typename Layout, size_t Offset>
-    struct layout_iterator_ct<Layout, Offset, 0>
-    {
-        using advance = meta::error_type;
-        using dereference = meta::error_type;
-
-        static constexpr size_t offset = Offset;
-        static constexpr bool is_end = true;
-        static constexpr bool empty()
-        {
-            return true;
-        }
-    };
+    // Previous sizes:
+    // .text = 42130
 
     //
     // layout_iterator
     // runtime equivalent of layout_iterator, keeping along an aligned buffer pointer.
-    template <typename AlignedPtr, typename CtIterator, bool IsEnd = CtIterator::is_end>
+    template <typename AlignedPtr, meta::concepts::Enumerator LayoutRange>
     struct layout_iterator
     {
         constexpr layout_iterator(AlignedPtr ptr) : buffer_(ptr)
         {
         }
 
+        static constexpr bool is_end = false;
+
         using pointer_type = AlignedPtr;
 
-        // ct_iterator
-        // compile time layout iterator desribing the current layout field
-        using ct_iterator = CtIterator;
-        using dereference = typename ct_iterator::dereference;
+        // compile time layout iterator range describing the remaining layout fields
+        using range = LayoutRange;
 
         // advance
         // return the iterator to the next field in the layout sequence. possibly advance the buffer pointer while doing so.
         constexpr auto advance() const
         {
-            return layout_iterator<AlignedPtr, next_t<ct_iterator>>(deref_t<ct_iterator>::field::transform_buffer(buffer_));
-        }
+            if constexpr(!meta::concepts::EmptyRange<range>)
+            {
+                return layout_iterator<AlignedPtr, meta::advance_t<range>>(meta::dereference_t<range>::field::transform_buffer(buffer_));
 
-        static constexpr bool is_end = ct_iterator::is_end;
+/*
+    LayoutRange = meta::iterator_range<                                                                                                                                                                                                                                                                  !!!v!!!
+                    netser::layout_meta_iterator<meta::sentinel<meta::tree_iterator<netser::layout_tree_ctx, meta::tlist<netser::int_<false, 32, netser::byte_order::big_endian>, meta::detail::SE<netser::layout<netser::int_<false, 32, netser::byte_order::big_endian> >, 0> >, meta::traversals::lr> >, 32>,
+                    netser::layout_meta_iterator<meta::sentinel<meta::tree_iterator<netser::layout_tree_ctx, meta::tlist<netser::int_<false, 32, netser::byte_order::big_endian>, meta::detail::SE<netser::layout<netser::int_<false, 32, netser::byte_order::big_endian> >, 0> >, meta::traversals::lr> >, 0> >
+*/
+            }
+            else
+            {
+                return;
+            }
+        }
 
         static constexpr size_t get_pointer_alignment()
         {
@@ -158,7 +102,7 @@ namespace netser
 
         static constexpr size_t get_offset()
         {
-            return ct_iterator::offset;
+            return offset_v<range>;
         }
 
         static constexpr size_t get_access_alignment(size_t additional_offset_bits)
@@ -179,8 +123,8 @@ namespace netser
     //
     // layout_iterator
     // runtime equivalent of layout_iterator, keeping along an aligned buffer pointer.
-    template <typename AlignedPtr, typename CtIterator>
-    struct layout_iterator<AlignedPtr, CtIterator, true>
+    template <typename AlignedPtr, meta::concepts::Sentinel LayoutRange>
+    struct layout_iterator<AlignedPtr, LayoutRange>
     {
         using pointer_type = AlignedPtr;
 
@@ -188,12 +132,10 @@ namespace netser
         {
         }
 
-        // ct_iterator
-        // compile time layout iterator desribing the current layout field
-        using ct_iterator = CtIterator;
-        using dereference = meta::error_type;
+        static constexpr bool is_end = true;
 
-        static constexpr bool is_end = ct_iterator::is_end;
+        // compile time layout iterator range describing the remaining layout fields
+        using range = LayoutRange;
 
         // advance
         // return the iterator to the next field in the layout sequence. possibly advance the buffer pointer while doing so.
@@ -249,12 +191,23 @@ namespace netser
     //
     template <typename Layout, size_t Offset = 0, typename AlignedPtr>
     constexpr auto make_layout_iterator(AlignedPtr ptr)
-        -> layout_iterator<typename AlignedPtr::template static_offset_t<Offset>, layout_iterator_ct<Layout, Offset>>
-    // cdt index parser cannont look at return statement in function body.
+        -> layout_iterator<typename AlignedPtr::template static_offset_t<Offset>, layout_enumerator_t<Layout>>
     {
-        return layout_iterator<typename AlignedPtr::template static_offset_t<Offset>, layout_iterator_ct<Layout>>(ptr);
+        return layout_iterator<typename AlignedPtr::template static_offset_t<Offset>, layout_enumerator_t<Layout>>(ptr);
     }
 
+    template <typename AlignedPtr, meta::concepts::Enumerator LayoutRange>
+    auto dereference(netser::layout_iterator<AlignedPtr, LayoutRange>) -> meta::dereference_t<LayoutRange>;
+
+    template<typename AlignedPtr, meta::concepts::Enumerator LayoutRange>
+    auto advance(netser::layout_iterator<AlignedPtr, LayoutRange> iter)
+    {
+        return iter.advance();
+    }
+
+    template <typename AlignedPtr, meta::concepts::Enumerator LayoutRange>
+    auto is_sentinel(netser::layout_iterator<AlignedPtr, LayoutRange>) -> std::integral_constant<bool, meta::concepts::Sentinel<LayoutRange>>;
 }
+
 
 #endif
